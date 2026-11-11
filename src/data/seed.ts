@@ -1,0 +1,100 @@
+import type { Profile } from './types';
+
+const img = (id: string) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=900&q=75`;
+const wave = (n: number) => Array.from({ length: 32 }, (_, i) => 0.25 + 0.75 * Math.abs(Math.sin(i * 0.7 + n)));
+
+export const seedProfiles: Profile[] = [
+  {
+    id: 'p_maya',
+    firstName: 'Maya',
+    age: 28,
+    pronouns: 'She/her',
+    city: 'Toronto',
+    distanceKm: 4,
+    intention: 'long_term',
+    verified: true,
+    photos: [
+      { id: 'ph_m1', uri: img('1742971171873-b386b69ee8a6'), status: 'approved' },
+      { id: 'ph_m2', uri: img('1759873821511-05c06ce184d0'), status: 'approved' },
+      { id: 'ph_m3', uri: img('1779019982983-206314d45f14'), status: 'approved' },
+    ],
+    prompts: [
+      { id: 'pr_m1', question: 'A perfect Sunday looks like', answer: 'Farmers market, a long walk by the lake, then cooking something new with good music on.' },
+      { id: 'pr_m2', question: 'I’m looking for', answer: 'Someone curious and kind who still texts “home safe?” after a night out.', voice: { uri: '', durationSec: 24, waveform: wave(1) } },
+      { id: 'pr_m3', question: 'Two truths and a lie', answer: 'I have climbed Kilimanjaro, I speak three languages, I’ve never seen Star Wars.' },
+    ],
+    basics: ['5′6″', 'Product designer', 'Doesn’t drink', 'Muslim', 'Wants kids'],
+    dateIdeas: ['Coffee and a walk', 'Art gallery', 'Cooking class'],
+    friendsTakes: [{ id: 'ft1', author: 'Sana', text: 'The friend who remembers your coffee order and your mum’s birthday.' }],
+  },
+  {
+    id: 'p_ayesha',
+    firstName: 'Ayesha',
+    age: 26,
+    pronouns: 'She/her',
+    city: 'Mississauga',
+    distanceKm: 15,
+    intention: 'life_partner',
+    verified: true,
+    photos: [
+      { id: 'ph_a1', uri: img('1764265150663-e58dcfc03252'), status: 'approved' },
+      { id: 'ph_a2', uri: img('1787100663079-4d1cc143ea47'), status: 'approved' },
+      { id: 'ph_a3', uri: img('1668879355609-8bdda74bda53'), status: 'approved' },
+    ],
+    prompts: [
+      { id: 'pr_a1', question: 'My family would describe me as', answer: 'The organiser. Every Eid plan has gone through my spreadsheet since 2015.' },
+      { id: 'pr_a2', question: 'Green flags I look for', answer: 'Patience, a good relationship with your siblings, and you read the menu before ordering.' },
+      { id: 'pr_a3', question: 'Let’s debate', answer: 'Chai is better than coffee. I will not be taking questions.' },
+    ],
+    basics: ['5′4″', 'Pharmacist', 'Prays regularly', 'Urdu, English'],
+    dateIdeas: ['Dessert spot', 'Bookshop browse', 'Sunset at the waterfront'],
+    friendsTakes: [],
+    chaperoneEnabled: true,
+  },
+  {
+    id: 'p_omar',
+    firstName: 'Omar',
+    age: 31,
+    pronouns: 'He/him',
+    city: 'Toronto',
+    distanceKm: 6,
+    intention: 'long_term',
+    verified: false,
+    photos: [
+      { id: 'ph_o1', uri: img('1614790948137-4fb01fc9bfd9'), status: 'approved' },
+      { id: 'ph_o2', uri: img('1762708546645-65ee9ccedfae'), status: 'approved' },
+      { id: 'ph_o3', uri: img('1653508036272-a3c11c6d5d8a'), status: 'approved' },
+    ],
+    prompts: [
+      { id: 'pr_o1', question: 'I geek out on', answer: 'Public transit maps. Ask me about any subway system and lose an hour.' },
+      { id: 'pr_o2', question: 'Typical Sunday', answer: 'Football in the morning, my nani’s for lunch, a long call with my brother.' },
+      { id: 'pr_o3', question: 'Best travel story', answer: 'Missed a train in Lisbon and ended up at a stranger’s birthday dinner.' },
+    ],
+    basics: ['6′0″', 'Civil engineer', 'Social drinker: no', 'Wants kids'],
+    dateIdeas: ['Board game café', 'Coffee and a walk'],
+    friendsTakes: [],
+  },
+  {
+    id: 'p_lena',
+    firstName: 'Lena',
+    age: 29,
+    pronouns: 'She/her',
+    city: 'Toronto',
+    distanceKm: 3,
+    intention: 'figuring_out',
+    verified: true,
+    photos: [
+      { id: 'ph_l1', uri: img('1779019982983-206314d45f14'), status: 'approved' },
+      { id: 'ph_l2', uri: img('1790271478791-f98675a9e3f3'), status: 'approved' },
+      { id: 'ph_l3', uri: img('1718999788192-393dff0a3cdf'), status: 'approved' },
+    ],
+    prompts: [
+      { id: 'pr_l1', question: 'The way to win me over', answer: 'Recommend me a book and actually want to talk about it after.' },
+      { id: 'pr_l2', question: 'I’m weirdly attracted to', answer: 'People who can parallel park on the first try.' },
+      { id: 'pr_l3', question: 'This year I really want to', answer: 'Finish my pottery course without breaking a single bowl.' },
+    ],
+    basics: ['5′7″', 'Teacher', 'Vegetarian'],
+    dateIdeas: ['Pottery class', 'Live music'],
+    friendsTakes: [],
+  },
+];

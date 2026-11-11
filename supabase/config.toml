@@ -1,0 +1,21 @@
+# Supabase CLI config (`supabase start` for local dev). See supabase/README.md.
+project_id = "neeo"
+
+[auth]
+enable_signup = true
+site_url = "neeo://"
+
+[auth.sms]
+enable_signup = true
+enable_confirmations = true
+max_frequency = "30s"
+otp_length = 6
+otp_expiry = 300
+
+# Reviewer / demo account: a single fixed test number with a fixed code.
+# Only this number bypasses SMS. Remove or rotate after review.
+[auth.sms.test_otp]
+15555550100 = "123456"
+
+[storage]
+file_size_limit = "10MiB"
