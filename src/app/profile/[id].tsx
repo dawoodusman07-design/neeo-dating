@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { ScrollView, TextInput, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/theme';
-import { Button, Card, EmptyState, IconButton, ProfilePhoto, Text, TextField, toast } from '@/ui';
+import { Button, Card, EmptyState, IconButton, ProfilePhoto, Text, toast } from '@/ui';
 import { api, type LikeTarget } from '@/data';
 import { useLike, useProfile } from '@/data/hooks';
 import { useScreenProtection } from '@/services/screenProtection';
@@ -77,14 +77,22 @@ export default function ProfileDetail() {
         <ProfileView profile={p} skipFirstPhoto onLikeTarget={canLike ? setTarget : undefined} />
       </ScrollView>
       {canLike ? (
-        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: t.space[2], paddingHorizontal: t.space[4], paddingTop: t.space[2], paddingBottom: insets.bottom + t.space[2], borderTopWidth: 1, borderTopColor: t.c.border }}>
-          <View style={{ flex: 1 }}>
-            <TextField label={tr('discover.likeWithComment')} value={comment} onChangeText={setComment} maxLength={200} placeholder={tr('discover.likeWithComment')} />
-          </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.space[2], paddingHorizontal: t.space[4], paddingTop: t.space[2], paddingBottom: insets.bottom + t.space[2], borderTopWidth: 1, borderTopColor: t.c.border }}>
+          <TextInput
+            value={comment}
+            onChangeText={setComment}
+            maxLength={200}
+            multiline
+            placeholder={tr('discover.likeWithComment')}
+            placeholderTextColor={t.c.textMuted}
+            accessibilityLabel={tr('discover.likeWithComment')}
+            allowFontScaling
+            style={{ flex: 1, minHeight: 52, maxHeight: 120, borderRadius: t.radius.lg, borderWidth: 1, borderColor: t.c.border, backgroundColor: t.c.surface, color: t.c.text, fontFamily: t.font.regular, fontSize: t.type.md, paddingHorizontal: t.space[4], paddingVertical: t.space[3], textAlign: 'auto' }}
+          />
           <IconButton icon="send" label={tr('discover.sendLike')} variant="action" size={52} onPress={() => send(comment, hero ? { kind: 'photo', id: hero.id } : undefined)} disabled={like.isPending} testID="profile-send-like" />
         </View>
       ) : null}
-      {target ? <LikeSheet profile={p} target={target} onClose={() => setTarget(undefined)} onSend={(c) => send(c, target)} sending={like.isPending} /> : null}
+      {target ? <LikeSheet key={target.id} profile={p} target={target} onClose={() => setTarget(undefined)} onSend={(c) => send(c, target)} sending={like.isPending} /> : null}
       <SafetyMenu profile={p} matchId={matchId} visible={menu} onClose={() => setMenu(false)} />
     </View>
   );

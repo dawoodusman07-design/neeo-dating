@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
+import { AndroidImportance } from 'expo-notifications/build/NotificationChannelManager.types';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 
@@ -24,11 +25,11 @@ export async function requestPushPermission(): Promise<{ status: PushPermission;
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync('default', {
       name: 'Matches and messages',
-      importance: Notifications.AndroidImportance.DEFAULT,
+      importance: AndroidImportance.DEFAULT,
     });
     await Notifications.setNotificationChannelAsync('safety', {
       name: 'Safety check-ins',
-      importance: Notifications.AndroidImportance.HIGH,
+      importance: AndroidImportance.HIGH,
     });
   }
   const { status } = await Notifications.requestPermissionsAsync();

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Card, Sheet, Text, TextField, ProfilePhoto } from '@/ui';
 import { commentSchema, type LikeTarget, type Profile } from '@/data';
@@ -16,7 +16,6 @@ export function LikeSheet({ profile, target, onClose, onSend, sending }: Props) 
   const { t } = useTranslation();
   const [comment, setComment] = useState('');
   const [error, setError] = useState<string>();
-  useEffect(() => setComment(''), [profile?.id, target?.id]);
   if (!profile) return null;
   const photo = target?.kind === 'photo' ? profile.photos.find((p) => p.id === target.id) : undefined;
   const prompt = target?.kind === 'prompt' ? profile.prompts.find((p) => p.id === target.id) : undefined;

@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { Animated, Easing, ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -29,7 +29,7 @@ export default function Discover() {
   const [likeOpen, setLikeOpen] = useState(false);
   const [canUndo, setCanUndo] = useState(false);
   const [photoId, setPhotoId] = useState<string>();
-  const anim = useRef(new Animated.Value(0)).current;
+  const [anim] = useState(() => new Animated.Value(0));
 
   if (intros.isLoading) return <View style={{ flex: 1, backgroundColor: t.c.bg }} />;
   if (intros.isError)
@@ -154,6 +154,7 @@ export default function Discover() {
       </View>
       {likeOpen ? (
         <LikeSheet
+          key={profile.id}
           profile={profile}
           target={likeTarget ?? (photoId ? { kind: 'photo', id: photoId } : profile.photos[0] ? { kind: 'photo', id: profile.photos[0].id } : undefined)}
           onClose={() => setLikeOpen(false)}

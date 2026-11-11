@@ -12,6 +12,7 @@ export type Locale = (typeof SUPPORTED)[number];
 
 const deviceLang = getLocales()[0]?.languageCode ?? 'en';
 
+// eslint-disable-next-line import/no-named-as-default-member
 i18n.use(initReactI18next).init({
   resources: { en: { translation: en }, ur: { translation: ur }, ar: { translation: ar } },
   lng: 'en', // English ships first; user can opt in to ur/ar in Region & language.
@@ -23,6 +24,7 @@ i18n.use(initReactI18next).init({
 I18nManager.allowRTL(true);
 
 export function applyLocale(lang: Locale) {
+  // eslint-disable-next-line import/no-named-as-default-member
   i18n.changeLanguage(lang);
   const rtl = RTL_LANGS.has(lang);
   const needsRestart = I18nManager.isRTL !== rtl;

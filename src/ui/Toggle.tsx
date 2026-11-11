@@ -18,6 +18,8 @@ export function Toggle({ value, onValueChange, label, disabled }: Props) {
       trackColor={{ false: t.c.border, true: t.c.action }}
       thumbColor={t.c.surface}
       ios_backgroundColor={t.c.border}
+      // react-native-web only (ignored on native)
+      {...({ activeThumbColor: t.c.surface } as object)}
     />
   );
 }

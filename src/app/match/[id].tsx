@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AccessibilityInfo, Animated, Easing, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -16,13 +16,14 @@ export default function MatchCelebration() {
   const match = useMatch(id);
   const me = useMe();
   const reduce = useReduceMotion();
-  const scale = useRef(new Animated.Value(reduce ? 1 : 0.85)).current;
+  const [scale] = useState(() => new Animated.Value(0.85));
   const name = match.data?.profile.firstName ?? '';
 
   useEffect(() => {
     if (!match.data) return;
     AccessibilityInfo.announceForAccessibility(`${tr('match.title')}. ${tr('match.body', { name })}`);
-    if (!reduce) Animated.timing(scale, { toValue: 1, duration: t.motion.matchScaleIn, easing: Easing.out(Easing.back(1.4)), useNativeDriver: true }).start();
+    if (reduce) scale.setValue(1);
+    else Animated.timing(scale, { toValue: 1, duration: t.motion.matchScaleIn, easing: Easing.out(Easing.back(1.4)), useNativeDriver: true }).start();
   }, [match.data, reduce, scale, t.motion.matchScaleIn, tr, name]);
 
   return (

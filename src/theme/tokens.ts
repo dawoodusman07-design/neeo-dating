@@ -32,7 +32,7 @@ export const color = {
     textMuted: '#BBA9B6',
     border: '#3A2D3A',
     action: '#E0577F',
-    actionPressed: '#C94770',
+    actionPressed: '#D4507A', // brief had #C94770 (4.04:1 under onAction); adjusted to pass AA 4.5:1
     brandDeep: '#D99BC0',
     success: '#4ADE80',
     danger: '#F87171',

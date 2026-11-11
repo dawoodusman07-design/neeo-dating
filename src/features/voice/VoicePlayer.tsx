@@ -21,8 +21,7 @@ export function VoicePlayer({ clip, label }: { clip: VoiceClip; label?: string }
 
   useEffect(() => {
     if (demoPos === null) return;
-    if (demoPos >= clip.durationSec) return setDemoPos(null);
-    const id = setTimeout(() => setDemoPos((p) => (p === null ? null : p + 0.25)), 250);
+    const id = setTimeout(() => setDemoPos((p) => (p === null || p + 0.25 >= clip.durationSec ? null : p + 0.25)), 250);
     return () => clearTimeout(id);
   }, [demoPos, clip.durationSec]);
 

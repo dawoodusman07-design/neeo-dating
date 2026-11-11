@@ -15,6 +15,8 @@ import { uid } from '@/lib/id';
 import { checkSync } from '@/services/textModeration';
 
 export const MOCK_OTP = '123456';
+/** Mock-only: signing in with this number skips onboarding (store screenshots, demos). */
+export const DEMO_ONBOARDED_PHONE = '+15555550199';
 export const DAILY_LIMIT = 8;
 const MAX_ATTEMPTS = 5;
 
@@ -55,6 +57,7 @@ export function createMockApi(): NeeoApi & { _state: ReturnType<typeof initialSt
         }
         state.otpAttempts = 0;
         state.me.phone = phone;
+        if (phone === DEMO_ONBOARDED_PHONE) state.onboarded = true;
         return { userId: state.me.id, onboarded: state.onboarded };
       },
       async reauthenticate(code) {
@@ -136,7 +139,7 @@ export function createMockApi(): NeeoApi & { _state: ReturnType<typeof initialSt
           const match: Match = { id: uid('m'), profile, matchedAt: new Date().toISOString(), unread: 0 };
           state.matches.unshift(match);
           state.received = state.received.filter((l) => l.profile.id !== profileId);
-          state.messages[match.id] = [];
+          state.messages[match.id] = [msg(match.id, 'system', 'system', 'matched')];
           if (comment) state.messages[match.id]!.push(msg(match.id, state.me.id, 'text', comment));
           return { matchId: match.id };
         }
