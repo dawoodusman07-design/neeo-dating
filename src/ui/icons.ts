@@ -1,0 +1,73 @@
+/**
+ * One outline icon set (lucide), one icon per meaning. Never use emoji.
+ */
+import {
+  ArrowDown, BadgeCheck, Ban, Bell, Bookmark, CalendarHeart, Camera, Check, ChevronDown, ChevronLeft, ChevronRight,
+  CircleAlert, CircleHelp, CirclePause, Clock, CloudOff, Compass, Contact, CreditCard, Download, Ellipsis, Eye, EyeOff,
+  Flag, Globe, GripVertical, Heart, ImagePlus, Info, Lightbulb, Lock, LogOut, MapPin, MessageCircle, Mic, Minus, Moon,
+  Pause, Phone, Play, Plus, RefreshCw, ScanFace, Send, ShieldCheck, SlidersHorizontal, Sparkles, Trash2, Undo2, User,
+  UserX, Users, WifiOff, X, type LucideIcon,
+} from 'lucide-react-native';
+
+export const Icons = {
+  discover: Compass,
+  likes: Heart,
+  chats: MessageCircle,
+  you: User,
+  preferences: SlidersHorizontal,
+  photoPrivacy: Lock,
+  safety: ShieldCheck,
+  verified: BadgeCheck,
+  notifications: Bell,
+  region: Globe,
+  plus: Sparkles,
+  undo: Undo2,
+  save: Bookmark,
+  pass: X,
+  close: X,
+  play: Play,
+  pause: Pause,
+  mic: Mic,
+  send: Send,
+  back: ChevronLeft,
+  chevron: ChevronRight,
+  expand: ChevronDown,
+  seeMore: ArrowDown,
+  more: Ellipsis,
+  camera: Camera,
+  addPhoto: ImagePlus,
+  dateIdea: CalendarHeart,
+  location: MapPin,
+  phone: Phone,
+  show: Eye,
+  hide: EyeOff,
+  report: Flag,
+  block: Ban,
+  unmatch: UserX,
+  time: Clock,
+  quietHours: Moon,
+  export: Download,
+  delete: Trash2,
+  pauseProfile: CirclePause,
+  help: CircleHelp,
+  check: Check,
+  dash: Minus,
+  error: CircleAlert,
+  offline: WifiOff,
+  uploadFailed: CloudOff,
+  retry: RefreshCw,
+  billing: CreditCard,
+  signOut: LogOut,
+  chaperone: Users,
+  info: Info,
+  blockContacts: Contact,
+  drag: GripVertical,
+  add: Plus,
+  faceScan: ScanFace,
+  tip: Lightbulb,
+} satisfies Record<string, LucideIcon>;
+
+export type IconName = keyof typeof Icons;
+
+/** Icons that must mirror in RTL (directional only). */
+export const DIRECTIONAL: ReadonlySet<IconName> = new Set(['back', 'chevron', 'send', 'undo']);

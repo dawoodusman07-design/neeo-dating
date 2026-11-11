@@ -22,12 +22,6 @@ const config: ExpoConfig = {
   icon: './assets/icon.png',
   userInterfaceStyle: 'automatic',
   runtimeVersion: { policy: 'appVersion' },
-  splash: {
-    image: './assets/splash-icon.png',
-    resizeMode: 'contain',
-    backgroundColor: '#FFFAFD',
-    dark: { image: './assets/splash-icon.png', backgroundColor: '#1A1219' },
-  },
   ios: {
     bundleIdentifier: bundleId,
     supportsTablet: false,
@@ -76,7 +70,6 @@ const config: ExpoConfig = {
       backgroundImage: './assets/android-icon-background.png',
       monochromeImage: './assets/android-icon-monochrome.png',
     },
-    edgeToEdgeEnabled: true,
     predictiveBackGestureEnabled: false,
     // Only the permissions we use, requested in context at runtime.
     permissions: [
@@ -96,6 +89,16 @@ const config: ExpoConfig = {
   web: { favicon: './assets/favicon.png' },
   plugins: [
     'expo-router',
+    [
+      'expo-splash-screen',
+      {
+        image: './assets/splash-icon.png',
+        imageWidth: 160,
+        resizeMode: 'contain',
+        backgroundColor: '#FFFAFD',
+        dark: { image: './assets/splash-icon.png', backgroundColor: '#1A1219' },
+      },
+    ],
     'expo-font',
     'expo-secure-store',
     'expo-image',
