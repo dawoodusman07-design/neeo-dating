@@ -1,0 +1,28 @@
+name: CI
+on:
+  push:
+    branches: [main, 'claude/**']
+  pull_request:
+
+jobs:
+  app:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run check:tokens   # zero hard-coded colours, zero emoji
+      - run: npm test -- --ci
+      - run: npx expo export --platform web --output-dir dist-web
+      - run: npx playwright install --with-deps chromium
+      - run: node scripts/e2e-web.cjs dist-web
+
+  rls:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y postgresql
+      - run: supabase/tests/run-rls-tests.sh
