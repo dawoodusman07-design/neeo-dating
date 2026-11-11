@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Delete your Neeo account</title><link rel="stylesheet" href="/style.css"></head>
+<body><main>
+<a class="wordmark" href="/">neeo</a>
+<h1>Delete your Neeo account</h1>
+<p class="muted">You can also delete your account in the app: You → Delete account. This page is for people who no longer have the app installed.</p>
+<div class="card">
+  <h2>What gets deleted</h2>
+  <ul><li>Your profile, photos and voice prompts</li><li>Your matches and messages</li><li>Your likes, preferences and settings</li></ul>
+  <p class="muted">We keep safety reports for up to 1 year, as described in our <a href="/privacy">Privacy Policy</a>. Deleting your account doesn’t cancel a Neeo Plus subscription — cancel it in your Apple ID or Google Play settings. <span class="review">[LEGAL REVIEW]</span></p>
+</div>
+<form class="card" id="f">
+  <h2>1. Confirm it’s you</h2>
+  <label for="phone">Phone number on your account</label>
+  <input id="phone" type="tel" autocomplete="tel" placeholder="+1 416 555 0100" required>
+  <button type="button" id="send">Send code</button>
+  <label for="code">6-digit code</label>
+  <input id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6">
+  <h2>2. Delete</h2>
+  <label for="confirm">Type DELETE to confirm</label>
+  <input id="confirm" autocapitalize="characters">
+  <button type="submit" class="danger">Delete my account</button>
+  <p id="status" role="status" aria-live="polite"></p>
+</form>
+<p class="muted">Can’t sign in? Email <a href="mailto:privacy@neeo.app?subject=Account%20deletion%20request">privacy@neeo.app</a> from any address with the phone number on your account and we’ll verify and delete it within 30 days.</p>
+</main>
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm';
+// Public anon key only (safe to expose; RLS protects data). Set at deploy time.
+const sb = createClient(window.NEEO_SUPABASE_URL ?? 'https://YOUR-PROJECT.supabase.co', window.NEEO_SUPABASE_ANON_KEY ?? 'YOUR-ANON-KEY');
+const $ = (id) => document.getElementById(id);
+const say = (m) => ($('status').textContent = m);
+$('send').onclick = async () => {
+  const { error } = await sb.auth.signInWithOtp({ phone: $('phone').value.replace(/[\s()-]/g, '') });
+  say(error ? error.message : 'Code sent. Check your messages.');
+};
+$('f').onsubmit = async (e) => {
+  e.preventDefault();
+  if ($('confirm').value.trim().toUpperCase() !== 'DELETE') return say('Type DELETE to confirm.');
+  const { error } = await sb.auth.verifyOtp({ phone: $('phone').value.replace(/[\s()-]/g, ''), token: $('code').value, type: 'sms' });
+  if (error) return say('That code didn’t match. Try again.');
+  const { error: delErr } = await sb.functions.invoke('delete-account', { body: {} });
+  say(delErr ? 'Something went wrong. Please email privacy@neeo.app.' : 'Your account has been deleted. Thank you for being part of Neeo.');
+  await sb.auth.signOut();
+};
+</script>
+</body></html>

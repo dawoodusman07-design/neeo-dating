@@ -1,5 +1,5 @@
 import React from 'react';
-import { Alert, FlatList, Pressable, View } from 'react-native';
+import { FlatList, Pressable, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,6 +11,7 @@ import { qk, useMatches } from '@/data/hooks';
 import { chatCapState } from '@/lib/chatCap';
 import { formatTime } from '@/lib/time';
 import { useMyId } from '@/stores/useMyId';
+import { confirm } from '@/lib/confirm';
 
 export default function Chats() {
   const t = useTheme();
@@ -30,17 +31,11 @@ export default function Chats() {
     return last.senderId === myId ? tr('chats.you', { text: body }) : body;
   };
 
-  const close = (m: Match) =>
-    Alert.alert(tr('chats.closeChat'), undefined, [
-      { text: tr('common.cancel'), style: 'cancel' },
-      {
-        text: tr('chats.closeChat'),
-        onPress: async () => {
-          await api.matches.close(m.id);
-          qc.invalidateQueries({ queryKey: qk.matches });
-        },
-      },
-    ]);
+  const close = async (m: Match) => {
+    if (!(await confirm({ title: `${tr('chats.closeChat')}: ${m.profile.firstName}`, ok: tr('chats.closeChat'), cancel: tr('common.cancel') }))) return;
+    await api.matches.close(m.id);
+    qc.invalidateQueries({ queryKey: qk.matches });
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: t.c.bg, paddingTop: insets.top }}>

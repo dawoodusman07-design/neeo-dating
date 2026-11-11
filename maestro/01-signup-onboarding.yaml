@@ -1,0 +1,45 @@
+# Critical path 1: signup → profile (mock data mode)
+appId: app.neeo.dev
+---
+- launchApp: { clearState: true }
+- tapOn: { id: "create-account" }
+- tapOn: { id: "phone-input" }
+- inputText: "+15555550100"
+- tapOn: { id: "send-code" }
+- tapOn: { id: "otp-input" }
+- inputText: "123456"
+- assertVisible: "When’s your birthday?"
+- tapOn: { id: "dob-input" }
+- inputText: "19950412"
+- tapOn: { id: "dob-continue" }
+- tapOn: { id: "name-input" }
+- inputText: "Sam"
+- tapOn: { id: "name-continue" }
+- tapOn: "Long-term relationship"
+- tapOn: { id: "intention-continue" }
+# Photos: pick 3 from the simulator library (seeded in CI with `xcrun simctl addmedia`)
+- repeat:
+    times: 3
+    commands:
+      - tapOn: { id: "add-photo" }
+      - tapOn: { index: 0, point: "50%,30%" }
+      - tapOn: { text: "Choose", optional: true }
+- tapOn: { id: "photos-continue" }
+- tapOn: { id: "prompt-answer-0" }
+- inputText: "Long breakfast and a walk by the lake"
+- tapOn: { id: "prompt-answer-1" }
+- inputText: "Someone kind who plans ahead"
+- tapOn: { id: "prompt-answer-2" }
+- inputText: "Fresh bread from the bakery"
+- tapOn: { id: "prompts-continue" }
+- tapOn: "Coffee and a walk"
+- tapOn: { id: "ideas-continue" }
+- tapOn: { id: "city-input" }
+- inputText: "Toronto"
+- tapOn: { id: "location-continue" }
+- tapOn: { id: "agreement-checkbox" }
+- tapOn: { id: "agreement-continue" }
+- tapOn: { id: "notif-skip" }
+- tapOn: { id: "verify-skip" }
+- tapOn: { id: "review-finish" }
+- assertVisible: "Today’s introductions"

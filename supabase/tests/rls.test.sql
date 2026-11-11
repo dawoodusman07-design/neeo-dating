@@ -161,4 +161,27 @@ select pg_temp.expect((select count(*) from profiles where id = :dave) = 0, 'del
 select pg_temp.expect((select count(*) from profile_private where user_id = :dave) = 0, 'delete_my_account removes private data');
 select pg_temp.expect((select count(*) from auth.users where id = :dave) = 0, 'delete_my_account removes the auth user');
 
+select pg_temp.as_user(:carol);
+select pg_temp.expect(exists (select 1 from daily_introductions(8) where id = :bob), 'control: Carol is introduced to Bob before any moderation');
+reset role;
+
+-- ---- Moderation queue: only admins see it; actions apply account status ----
+insert into auth.users (id) values ('eeeeeeee-0000-0000-0000-000000000005');
+insert into profiles (id, first_name, dob, intention) values ('eeeeeeee-0000-0000-0000-000000000005', 'Mod', '1990-01-01', 'long_term');
+insert into admins (user_id) values ('eeeeeeee-0000-0000-0000-000000000005');
+select pg_temp.as_user(:bob);
+select pg_temp.expect((select count(*) from moderation_queue) = 0, 'non-admins see an empty moderation queue');
+reset role;
+select pg_temp.as_user('eeeeeeee-0000-0000-0000-000000000005');
+select pg_temp.expect((select count(*) from moderation_queue) >= 1, 'admins see open reports in the queue');
+insert into moderation_actions (report_id, target_user, action, moderator_id)
+  select report_id, reported_id, 'suspend', auth.uid() from moderation_queue limit 1;
+reset role;
+select pg_temp.expect((select status from profiles where id = :bob) = 'suspended', 'suspend action suspends the account');
+select pg_temp.expect((select count(*) from reports where status = 'open') = 0, 'actioned report leaves the queue');
+select pg_temp.as_user(:carol);
+select pg_temp.expect((select count(*) from profiles where id = :bob) = 0, 'suspended users disappear for everyone else');
+select pg_temp.expect(not exists (select 1 from daily_introductions(8) where id = :bob), 'suspended users are excluded from introductions');
+reset role;
+
 \echo 'ALL RLS TESTS PASSED'

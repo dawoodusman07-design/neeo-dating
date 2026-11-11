@@ -1,0 +1,37 @@
+# Critical path 2: like → match → chat → report → block
+appId: app.neeo.dev
+---
+- launchApp: { clearState: true }
+- tapOn: { id: "create-account" }
+- tapOn: { id: "phone-input" }
+- inputText: "+15555550199"   # mock demo account (already onboarded)
+- tapOn: { id: "send-code" }
+- tapOn: { id: "otp-input" }
+- inputText: "123456"
+- assertVisible: "Maya, 28"
+- tapOn: { id: "like" }
+- tapOn: { id: "like-comment" }
+- inputText: "That Sunday sounds perfect."
+- tapOn: { id: "send-like" }
+- assertVisible: "It’s a match"
+- tapOn: { id: "match-send" }
+- tapOn: { id: "composer" }
+- inputText: "Hi Maya! Farmers market this weekend?"
+- tapOn: { id: "send" }
+- assertVisible: "Hi Maya! Farmers market this weekend?"
+# harmful-message nudge
+- tapOn: { id: "composer" }
+- inputText: "you are stupid"
+- tapOn: { id: "send" }
+- assertVisible: "Are you sure?"
+- tapOn: "Edit message"
+- eraseText
+# report → block
+- tapOn: { id: "chat-safety" }
+- tapOn: "Report"
+- tapOn: "Harassment or hateful messages"
+- tapOn: { id: "report-submit" }
+- assertVisible: "Thanks for telling us"
+- tapOn: "Done"
+- tapOn: "Chats"
+- assertNotVisible: { id: "chat-row-Maya" }

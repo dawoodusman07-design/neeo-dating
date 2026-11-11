@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, FlatList, KeyboardAvoidingView, Platform, ScrollView, TextInput, View } from 'react-native';
+import { FlatList, KeyboardAvoidingView, Platform, ScrollView, TextInput, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,6 +15,7 @@ import { aiAssist } from '@/services/aiAssist';
 import { useScreenProtection } from '@/services/screenProtection';
 import { useSettings } from '@/stores/settings';
 import { useMyId } from '@/stores/useMyId';
+import { confirm } from '@/lib/confirm';
 import { Bubble } from '@/features/chat/Bubble';
 import { ProposeDateSheet } from '@/features/chat/ProposeDateSheet';
 import { SafetyMenu } from '@/features/safety/SafetyMenu';
@@ -83,11 +84,10 @@ export default function Conversation() {
       setText('');
     };
     if (check.severity === 'block') return toast(tr('chat.blockedSend'), 'error');
-    if (check.severity === 'nudge')
-      return Alert.alert(tr('chat.nudgeTitle'), tr('chat.nudgeBody'), [
-        { text: tr('chat.nudgeEdit'), style: 'cancel' },
-        { text: tr('chat.nudgeSend'), onPress: go },
-      ]);
+    if (check.severity === 'nudge') {
+      const sendAnyway = await confirm({ title: tr('chat.nudgeTitle'), message: tr('chat.nudgeBody'), ok: tr('chat.nudgeSend'), cancel: tr('chat.nudgeEdit') });
+      return sendAnyway ? go() : undefined;
+    }
     go();
   };
 

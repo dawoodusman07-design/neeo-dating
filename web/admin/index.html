@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex"><title>Neeo moderation queue</title><link rel="stylesheet" href="/style.css">
+<style>main{max-width:1100px}.actions button{margin:4px 4px 0 0;min-height:40px;padding:0 14px;font-size:14px}</style></head>
+<body><main>
+<h1>Moderation queue</h1>
+<p class="muted">Admins only. Access is enforced by RLS (the <code>admins</code> table); non-admins see an empty queue. Under-18 reports are always listed first.</p>
+<div class="card" id="login">
+  <label for="phone">Moderator phone</label><input id="phone" type="tel">
+  <button id="send">Send code</button>
+  <label for="code">Code</label><input id="code" inputmode="numeric" maxlength="6">
+  <button id="verify">Sign in</button>
+</div>
+<section id="app" hidden>
+  <h2>Open reports</h2>
+  <table><thead><tr><th>When</th><th>Reason</th><th>Reported</th><th>Details / message</th><th>Total reports</th><th>Action</th></tr></thead><tbody id="rows"></tbody></table>
+  <h2>Open appeals</h2>
+  <table><thead><tr><th>When</th><th>User</th><th>Status</th><th>Appeal</th><th>Decision</th></tr></thead><tbody id="appeals"></tbody></table>
+</section>
+<p id="status" role="status" aria-live="polite"></p>
+</main>
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm';
+const sb = createClient(window.NEEO_SUPABASE_URL ?? 'https://YOUR-PROJECT.supabase.co', window.NEEO_SUPABASE_ANON_KEY ?? 'YOUR-ANON-KEY');
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+const say = (m) => ($('status').textContent = m);
+$('send').onclick = async () => { const { error } = await sb.auth.signInWithOtp({ phone: $('phone').value }); say(error?.message ?? 'Code sent'); };
+$('verify').onclick = async () => { const { error } = await sb.auth.verifyOtp({ phone: $('phone').value, token: $('code').value, type: 'sms' }); if (error) return say(error.message); load(); };
+async function act(report, target, action) {
+  const note = action === 'dismiss' ? null : prompt(`Note for ${action} (visible to the user in their appeal)`);
+  const { data: { user } } = await sb.auth.getUser();
+  const { error } = await sb.from('moderation_actions').insert({ report_id: report, target_user: target, action, note, moderator_id: user.id });
+  say(error ? error.message : `${action} applied`); load();
+}
+async function decide(id, user, status) {
+  await sb.from('appeals').update({ status }).eq('id', id);
+  if (status === 'overturned') { const { data: { user: me } } = await sb.auth.getUser(); await sb.from('moderation_actions').insert({ target_user: user, action: 'reinstate', moderator_id: me.id, note: 'appeal overturned' }); }
+  load();
+}
+window.act = act; window.decide = decide;
+async function load() {
+  $('login').hidden = true; $('app').hidden = false;
+  const { data } = await sb.from('moderation_queue').select('*');
+  $('rows').innerHTML = (data ?? []).map((r) => `<tr>
+    <td>${new Date(r.created_at).toLocaleString()}</td><td><strong>${esc(r.reason)}</strong></td>
+    <td>${esc(r.reported_name)}<br><span class="muted">${esc(r.reported_status)}</span></td>
+    <td>${esc(r.details)}${r.message_body ? `<br><em>“${esc(r.message_body)}”</em>` : ''}</td><td>${r.total_reports}</td>
+    <td class="actions">${['warn', 'suspend', 'ban', 'dismiss'].map((a) => `<button class="${a === 'ban' ? 'danger' : a === 'dismiss' ? 'secondary' : ''}" onclick="act('${r.report_id}','${r.reported_id}','${a}')">${a}</button>`).join('')}</td></tr>`).join('') || '<tr><td colspan="6">Queue is empty.</td></tr>';
+  const { data: ap } = await sb.from('appeals_queue').select('*');
+  $('appeals').innerHTML = (ap ?? []).map((a) => `<tr><td>${new Date(a.created_at).toLocaleString()}</td><td>${esc(a.first_name)}</td><td>${esc(a.account_status)}</td><td>${esc(a.body)}</td>
+    <td class="actions"><button onclick="decide('${a.id}','${a.user_id}','overturned')">Overturn</button><button class="secondary" onclick="decide('${a.id}','${a.user_id}','upheld')">Uphold</button></td></tr>`).join('') || '<tr><td colspan="5">No open appeals.</td></tr>';
+}
+sb.auth.getSession().then(({ data }) => data.session && load());
+</script>
+</body></html>

@@ -1,0 +1,16 @@
+# Paywall: comparison table, plan choice, purchase states, restore.
+appId: app.neeo.dev
+---
+- launchApp: { clearState: true }
+- tapOn: { id: "create-account" }
+- tapOn: { id: "phone-input" }
+- inputText: "+15555550199"
+- tapOn: { id: "send-code" }
+- tapOn: { id: "otp-input" }
+- inputText: "123456"
+- tapOn: "Likes"
+- tapOn: { id: "likes-upsell" }
+- assertVisible: "Neeo Plus"
+- assertVisible: "Restore purchase"
+- tapOn: { id: "plus-continue" }
+- assertVisible: "Welcome to Plus"

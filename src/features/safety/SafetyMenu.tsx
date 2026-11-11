@@ -1,11 +1,11 @@
 import React from 'react';
-import { Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import { ListGroup, ListRow, Sheet, toast } from '@/ui';
 import { api, type Profile } from '@/data';
 import { useBlock } from '@/data/hooks';
+import { confirm as confirmDialog } from '@/lib/confirm';
 
 type Props = {
   profile: Profile;
@@ -23,11 +23,9 @@ export function SafetyMenu({ profile, matchId, visible, onClose, extra }: Props)
   const block = useBlock();
   const name = profile.firstName;
 
-  const confirm = (message: string, action: string, run: () => Promise<void>) =>
-    Alert.alert(message, undefined, [
-      { text: t('common.cancel'), style: 'cancel' },
-      { text: action, style: 'destructive', onPress: run },
-    ]);
+  const confirm = async (message: string, action: string, run: () => Promise<void>) => {
+    if (await confirmDialog({ title: message, ok: action, cancel: t('common.cancel'), destructive: true })) await run();
+  };
 
   return (
     <Sheet visible={visible} onClose={onClose} title={t('chat.safetySheet')}>

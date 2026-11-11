@@ -1,0 +1,14 @@
+# Under-18 users are blocked with a clear "not eligible" screen.
+appId: app.neeo.dev
+---
+- launchApp: { clearState: true }
+- tapOn: { id: "create-account" }
+- tapOn: { id: "phone-input" }
+- inputText: "+15555550100"
+- tapOn: { id: "send-code" }
+- tapOn: { id: "otp-input" }
+- inputText: "123456"
+- tapOn: { id: "dob-input" }
+- inputText: "20120101"
+- tapOn: { id: "dob-continue" }
+- assertVisible: "Neeo is for adults"

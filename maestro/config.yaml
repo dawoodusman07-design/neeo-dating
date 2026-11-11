@@ -1,0 +1,5 @@
+# Run: maestro test maestro/   (against a development build with EXPO_PUBLIC_DATA_MODE=mock)
+flows:
+  - "*.yaml"
+excludeFlows:
+  - config.yaml

@@ -1,0 +1,23 @@
+# Critical path 3: delete account (reauthenticate → explain → confirm → done)
+appId: app.neeo.dev
+---
+- launchApp: { clearState: true }
+- tapOn: { id: "create-account" }
+- tapOn: { id: "phone-input" }
+- inputText: "+15555550199"
+- tapOn: { id: "send-code" }
+- tapOn: { id: "otp-input" }
+- inputText: "123456"
+- tapOn: "You"
+- scrollUntilVisible: { element: "Delete account" }
+- tapOn: "Delete account"
+- tapOn: { id: "delete-continue" }
+- tapOn: { id: "delete-otp" }
+- inputText: "123456"
+- tapOn: { id: "delete-reauth" }
+- tapOn: { id: "delete-confirm" }
+- inputText: "DELETE"
+- tapOn: { id: "delete-final" }
+- assertVisible: "Your account has been deleted"
+- tapOn: "Close"
+- assertVisible: "Something real starts with hello."

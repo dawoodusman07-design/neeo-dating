@@ -1,9 +1,9 @@
 import React from 'react';
-import { Alert } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { ListGroup, ListRow, Screen } from '@/ui';
 import { applyLocale, type Locale } from '@/i18n';
 import { useSettings } from '@/stores/settings';
+import { notify } from '@/lib/confirm';
 
 const LANGS: { key: Locale; label: string }[] = [
   { key: 'en', label: 'English' },
@@ -33,7 +33,7 @@ export default function Region() {
             onPress={() => {
               set('locale', l.key);
               const { needsRestart } = applyLocale(l.key);
-              if (needsRestart) Alert.alert(t('settings.rtlNote'));
+              if (needsRestart) notify(t('settings.rtlNote'));
             }}
           />
         ))}
