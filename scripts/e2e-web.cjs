@@ -84,6 +84,22 @@ const BASE = `http://localhost:${PORT}`;
     await see('Maya, 28');
     step('signed in → Discover');
 
+    // ---- likes are free: names and comments visible without Plus ----
+    await tab('Likes');
+    await see('Lena, 29');
+    await see('What are you reading right now?');
+    step('likes: free user sees who liked them, with the comment');
+
+    // ---- Plus filters are locked for free users ----
+    await tab('You');
+    await button(/^Your preferences/);
+    await see('Travel mode');
+    for (const name of ['Only show verified profiles', 'Only show profiles with a voice prompt', 'Travel mode']) {
+      assert.ok(await page.locator(`input[role="switch"][aria-label="${name}"]`).first().isDisabled(), `${name} is locked without Plus`);
+    }
+    step('preferences: advanced filters and travel mode locked without Plus');
+    await backToTabs();
+
     // ---- restore with nothing to restore (38 → 40) ----
     await tab('You');
     await button(/^Settings/);
@@ -115,6 +131,21 @@ const BASE = `http://localhost:${PORT}`;
     await button(/^Explore Plus/);
     await see('You are on Neeo Plus');
     step('membership: "You are on Neeo Plus"');
+
+    // ---- with Plus: travel mode + advanced filter save ----
+    await backToTabs();
+    await tab('You');
+    await button(/^Your preferences/);
+    await page.locator('input[role="switch"][aria-label="Travel mode"]').first().click();
+    await tid('travel-city').fill('Lahore');
+    await page.locator('input[role="switch"][aria-label="Only show verified profiles"]').first().click();
+    await tid('prefs-save').click();
+    await page.getByRole('tablist').waitFor({ timeout: 8000 });
+    await tab('You');
+    await button(/^Your preferences/);
+    assert.equal(await tid('travel-city').inputValue(), 'Lahore', 'travel city saved');
+    step('preferences: Plus member saves travel mode + verified-only filter');
+    await backToTabs();
 
     // ---- membership states as RevenueCat reports them (43, 44, 45) ----
     for (const [id, text] of [

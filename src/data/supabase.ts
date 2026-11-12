@@ -7,8 +7,9 @@ import 'react-native-url-polyfill/auto';
 import * as SecureStore from 'expo-secure-store';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { NeeoApi } from './api';
-import { ApiError, type Match, type Message, type Photo, type Profile, type MyProfile, type Preferences, type SupportTicket } from './types';
-import { completeness } from './mock';
+import { ApiError, type Match, type Message, type Photo, type Profile, type MyProfile, type Preferences, type SupportTicket, type PreferencePreset, type SavedProfile, type DatePlan } from './types';
+import { completeness } from './completeness';
+import { runtimeConfig } from '@/config';
 
 const SIGNED_URL_TTL = 60 * 10; // 10 minutes
 
@@ -20,9 +21,8 @@ const secureStorage = {
 };
 
 export function createSupabaseClient(): SupabaseClient {
-  const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
-  const key = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) throw new Error('Supabase URL / anon key missing. See .env.example');
+  const { supabaseUrl: url, supabaseAnonKey: key } = runtimeConfig;
+  if (!url || !key) throw new Error('Supabase URL / anon key missing. See .env.example'); // resolveRuntimeConfig fails earlier with details
   return createClient(url, key, {
     auth: { storage: secureStorage, autoRefreshToken: true, persistSession: true, detectSessionInUrl: false },
   });
@@ -50,6 +50,7 @@ function ageOf(dob: string) {
 function mapError(e: unknown): never {
   const err = e as { message?: string; status?: number; code?: string };
   const msg = err?.message ?? '';
+  if (/plus_required/i.test(msg)) throw new ApiError('plus_required', msg);
   if (/rate limit|too many/i.test(msg)) throw new ApiError('otp_locked', msg, 15 * 60);
   if (/expired/i.test(msg)) throw new ApiError('expired_code', msg);
   if (/invalid|token/i.test(msg) && err.status === 403) throw new ApiError('invalid_code', msg);
@@ -239,16 +240,34 @@ export function createSupabaseApi(sb: SupabaseClient = createSupabaseClient()): 
       async preferences(): Promise<Preferences> {
         const { data } = await sb.from('preferences').select('*').maybeSingle();
         return data
-          ? { genders: data.genders, ageMin: data.age_min, ageMax: data.age_max, maxKm: data.max_km, intentions: data.intentions, verifiedOnly: data.verified_only }
-          : { genders: [], ageMin: 18, ageMax: 99, maxKm: 50, intentions: ['long_term', 'life_partner', 'figuring_out'], verifiedOnly: false };
+          ? {
+              genders: data.genders, ageMin: data.age_min, ageMax: data.age_max, maxKm: data.max_km, intentions: data.intentions,
+              verifiedOnly: data.verified_only, voiceOnly: data.voice_only, travelCity: data.travel_city,
+            }
+          : { genders: [], ageMin: 18, ageMax: 99, maxKm: 50, intentions: ['long_term', 'life_partner', 'figuring_out'], verifiedOnly: false, voiceOnly: false, travelCity: null };
       },
       async setPreferences(p) {
         const id = await uid();
         const { error } = await sb.from('preferences').upsert({
           user_id: id, genders: p.genders, age_min: p.ageMin, age_max: p.ageMax, max_km: p.maxKm, intentions: p.intentions,
-          verified_only: p.verifiedOnly, updated_at: new Date().toISOString(),
+          verified_only: p.verifiedOnly, voice_only: p.voiceOnly, travel_city: p.travelCity, updated_at: new Date().toISOString(),
         });
         if (error) mapError(error);
+      },
+      async presets(): Promise<PreferencePreset[]> {
+        const { data } = await sb.from('preferences').select('presets').maybeSingle();
+        return (data?.presets as PreferencePreset[] | undefined) ?? [];
+      },
+      async savePreset(name, prefs) {
+        const preset: PreferencePreset = { id: `pre_${Date.now()}`, name, prefs };
+        const current = await api.me.presets();
+        const { error } = await sb.from('preferences').update({ presets: [...current, preset] }).eq('user_id', await uid());
+        if (error) mapError(error);
+        return preset;
+      },
+      async deletePreset(presetId) {
+        const current = await api.me.presets();
+        await sb.from('preferences').update({ presets: current.filter((p) => p.id !== presetId) }).eq('user_id', await uid());
       },
       async review() {
         const { data } = await sb.rpc('my_account_review');
@@ -499,6 +518,57 @@ export function createSupabaseApi(sb: SupabaseClient = createSupabaseClient()): 
         const { error } = await sb.from('support_messages').insert({ ticket_id: id, sender: 'user', body });
         if (error) mapError(error);
         return api.support.get(id);
+      },
+    },
+    saved: {
+      async profiles(): Promise<SavedProfile[]> {
+        const { data } = await sb.from('saved_profiles').select('profile_id, created_at').order('created_at', { ascending: false });
+        const rows = await Promise.all(
+          (data ?? []).map(async (r) => {
+            try {
+              return { profile: await profileById(r.profile_id), savedAt: r.created_at as string };
+            } catch {
+              return null; // blocked, paused or deleted since saving
+            }
+          }),
+        );
+        return rows.filter((r): r is SavedProfile => !!r);
+      },
+      async saveProfile(profileId) {
+        const { error } = await sb.from('saved_profiles').upsert({ user_id: await uid(), profile_id: profileId });
+        if (error) mapError(error);
+      },
+      async removeProfile(profileId) {
+        await sb.from('saved_profiles').delete().eq('profile_id', profileId);
+      },
+      async plans(): Promise<DatePlan[]> {
+        const { data } = await sb.from('date_plans').select('*').order('created_at', { ascending: false });
+        return (data ?? []).map((d) => ({ id: d.id, matchId: d.match_id, name: d.partner_name, idea: d.idea, when: d.when_text ?? undefined, place: d.place ?? undefined, savedAt: d.created_at }));
+      },
+      async savePlan(plan) {
+        const { error } = await sb.from('date_plans').upsert({
+          id: /^[0-9a-f-]{36}$/.test(plan.id) ? plan.id : undefined,
+          user_id: await uid(), match_id: plan.matchId, partner_name: plan.name, idea: plan.idea, when_text: plan.when ?? null, place: plan.place ?? null,
+        });
+        if (error) mapError(error);
+      },
+      async removePlan(id) {
+        await sb.from('date_plans').delete().eq('id', id);
+      },
+    },
+    notes: {
+      async get(profileId) {
+        const { data } = await sb.from('profile_notes').select('body').eq('profile_id', profileId).maybeSingle();
+        return (data?.body as string | undefined) ?? '';
+      },
+      async set(profileId, body) {
+        const me = await uid();
+        if (!body.trim()) {
+          await sb.from('profile_notes').delete().eq('profile_id', profileId);
+          return;
+        }
+        const { error } = await sb.from('profile_notes').upsert({ user_id: me, profile_id: profileId, body: body.trim(), updated_at: new Date().toISOString() });
+        if (error) mapError(error);
       },
     },
     inbox: {

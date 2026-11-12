@@ -1,6 +1,6 @@
 # Neeo — progress
 
-_Last updated: 2026-11-11_
+_Last updated: 2026-11-12_
 
 ## Verification status (all run in this repo, all passing)
 
@@ -9,19 +9,32 @@ _Last updated: 2026-11-11_
 | `npx tsc --noEmit` (strict) | ✅ 0 errors |
 | `npx expo lint` | ✅ 0 errors, 0 warnings |
 | `npm run check:tokens` | ✅ 0 hard-coded colours, 0 emoji in `src/` |
-| `npm test` (Jest + RNTL) | ✅ 65 tests: WCAG contrast for both themes, age gate, distance rounding, chat cap, harmful-message nudges, validation, mock backend critical path, UI kit accessibility |
-| `npm run test:rls` | ✅ 42 RLS isolation checks against real Postgres 16 (see list in `supabase/tests/rls.test.sql`) |
-| `npm run e2e:web` | ✅ Critical path in the real app (web build): wrong OTP → under-18 block → sign in → like with comment → match → chat → harmful-message nudge → report + block → blocked user gone → delete account → welcome |
+| `npm test` (Jest + RNTL) | ✅ 88 tests: WCAG contrast, age gate, distance rounding, chat cap, nudges, validation, mock backend paths, membership states, Plus rules, synced lists, UI kit accessibility |
+| `npm run test:rls` | ✅ 74 RLS / server-rule checks against real Postgres 16 (see `supabase/tests/rls.test.sql`) |
+| `npm run e2e:web` | ✅ 22 steps in the real app (web build): sign-up errors, age gate, free likes, Plus-locked filters, purchase failed / pending → confirmed / restore, travel mode, membership states, like → match → chat, nudge, report, block, end connection, support, reauth failure, delete |
 | `expo export --platform android` | ✅ Hermes bundle builds |
 | Maestro flows (`maestro/`) | ⚠️ Written, **not run** — this environment has no iOS simulator / Android emulator |
+
+## Decisions applied (2026-11-12)
+
+1. **Plus model — package model.** Seeing who liked you and replying is **free** (the "Liked you" blur is gone). **Neeo Plus = advanced filters** (verified only, voice prompts only), **saved preference presets** and **travel mode**. Enforced server-side by `preferences_plus_guard` + `has_plus()` (free users can switch Plus features off but never on; after Plus ends, stored filters are ignored by `daily_introductions`). Paywall, FAQ, STORE_LISTING.md, tests and E2E updated.
+2. **Minimum 3 photos** — kept.
+3. **Photo privacy v1** — one "Private photos" switch + per-person sharing/revoking. See "v2" below.
+4. **Headline** — "Make room for something real." in the app, STORE_LISTING.md, web/index.html and the store screenshots.
+5. **Synced lists** — saved profiles, saved date plans and private notes are stored in Supabase (`saved_profiles`, `date_plans`, `profile_notes`) with owner-only RLS; preference presets live in `preferences.presets` (Plus-gated). Only unsent message drafts stay on the device.
+
+## v2 backlog
+
+- **Per-photo privacy** (package 13 / privacy.svg): choose which individual photos stay private and share them match by match. Needs a per-photo visibility column, per-photo blurred variants and storage-policy changes; v1 deliberately ships one switch + per-person grants.
+- Mock backend: daily introductions don't apply preference filters (the real filter logic is in SQL and RLS-tested).
 
 ## Design package pass (2026-11-12)
 
 The original design package is now in `reference-prototype/`; `npm run gap-report` regenerates `GAP_REPORT.md`.
 
-- **Coverage:** 123 screens checked (58 inventory + 7 core + 58 Appendix B): **119 built, 4 partial, 0 missing**. The partials are deliberate: the Likes blur (Plus-model conflict, needs your decision) and three items stored on-device only (saved profiles, saved date plans, private notes).
+- **Coverage:** 123 screens checked (58 inventory + 7 core + 58 Appendix B): **123 built, 0 partial, 0 missing** (after the decisions above).
 - **Copy:** aligned with the package's tone; 36 fields still differ, each with a recorded reason (form-field samples, sample data, v2 rules, or conflicts).
-- **Conflicts:** 17 listed in `GAP_REPORT.md`. Three need your decision: the Plus model, the minimum photo count and per-photo privacy.
+- **Conflicts:** 18 listed in `GAP_REPORT.md`, all decided.
 - **Membership lifecycle (30–45):** every state comes from RevenueCat customer info (`membershipFromEntitlement`, unit-tested). Pending purchases re-sync with "Check purchase status".
 - **Now working states:** OTP rate limit and lockout, photo moderation and reorder, notification preferences, blocked accounts and unblock, export ready/download/expiry, reauthentication failure, support conversation, appeal outcome.
 - **Verification:** Jest 83 tests; RLS suite 54 checks (an earlier commit message said 57 — 54 is the real count); web E2E 19 steps including purchase failed, pending → confirmed, restore none/success, and renewal-off / billing-issue / expired.
@@ -78,8 +91,7 @@ RevenueCat paywall (comparison table with text alternatives, plan radio group, r
 - **Token change:** dark `actionPressed` was `#C94770` in the brief, which gives only 4.04:1 under `onAction` text. Changed to `#D4507A` (4.57:1) so pressed buttons pass AA. Everything else is as specified.
 - **Photo reordering** uses accessible move-earlier / move-later buttons rather than a drag gesture. A drag gesture (reanimated + gesture-handler) is still to do; the buttons must stay for screen-reader users anyway.
 - `src/data/supabase.ts` type-checks and follows the schema, and the schema/RLS are tested, but the client has **not been run against a live Supabase project** yet. Edge Functions are written but not deployed or tested.
-- Preferences are saved and applied in `daily_introductions` (RLS-tested). Plus is not yet enforced server-side (e.g. 15 vs 8 introductions); `entitlements` table + RevenueCat webhook are in place for it.
-- Saved profiles, saved date plans and private notes are stored on the device only (not synced).
+- Preferences are saved and applied in `daily_introductions` (RLS-tested). Plus features are enforced server-side from the `entitlements` table, which the RevenueCat webhook keeps current.
 - Friend's Take shows on profiles; the invite-a-friend flow is not built. Local events (P3) not started.
 - Waveforms for newly recorded voice clips are placeholders (no amplitude analysis yet).
 - Urdu and Arabic contain only a few strings (fallback to English) and are marked `[TRANSLATION REVIEW]`. RTL layout uses start/end throughout but has not been checked visually on a device.
@@ -97,4 +109,4 @@ RevenueCat paywall (comparison table with text alternatives, plan radio group, r
 6. **Host `web/`** at `neeo.app` (privacy, terms, community guidelines, safety, child safety, delete-account) and the admin page somewhere private.
 7. **Translations:** native-speaker Urdu and Arabic.
 8. **Device QA:** run `maestro test maestro/` on iOS and Android, VoiceOver/TalkBack passes, 200% text, RTL.
-9. **App Review:** create the reviewer demo account (test number `+1 555 555 0100`, code `123456` in `supabase/config.toml`) and paste the notes from `STORE_LISTING.md`.
+9. **App Review:** create the reviewer test number and code in the hosted Supabase dashboard (never in the repo; rotate after each review, see README) and paste the notes from `STORE_LISTING.md`.

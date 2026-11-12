@@ -75,3 +75,18 @@ export function useSendMessage(matchId: string) {
     },
   });
 }
+
+// ---- Synced personal lists (owner-only RLS) ----
+export const useSavedProfiles = () => useQuery({ queryKey: ['saved', 'profiles'], queryFn: api.saved.profiles });
+export const useDatePlans = () => useQuery({ queryKey: ['saved', 'plans'], queryFn: api.saved.plans });
+export const useNote = (profileId: string) => useQuery({ queryKey: ['note', profileId], queryFn: () => api.notes.get(profileId) });
+export const usePresets = () => useQuery({ queryKey: ['presets'], queryFn: api.me.presets });
+
+/** Save / unsave a profile with an optimistic cache update. */
+export function useToggleSaved() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ profileId, saved }: { profileId: string; saved: boolean }) => (saved ? api.saved.removeProfile(profileId) : api.saved.saveProfile(profileId)),
+    onSettled: () => qc.invalidateQueries({ queryKey: ['saved', 'profiles'] }),
+  });
+}

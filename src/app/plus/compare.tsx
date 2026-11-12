@@ -18,13 +18,15 @@ export default function Compare() {
   const [picked, setPicked] = useState<string>();
   const selected = picked ?? plans.data?.find((p) => p.badge)?.id ?? plans.data?.[0]?.id;
 
+  // Free covers everything needed to meet someone; Plus adds three conveniences.
   const rows: Row[] = [
-    { label: tr('plus.f1'), free: tr('plus.f1free'), plus: tr('plus.f1plus') },
+    { label: tr('plus.f1'), free: true, plus: true },
     { label: tr('plus.f2'), free: true, plus: true },
-    { label: tr('plus.f3'), free: false, plus: true },
-    { label: tr('plus.f4'), free: false, plus: true },
-    { label: tr('plus.f6'), free: false, plus: true },
+    { label: tr('plus.f3'), free: true, plus: true },
+    { label: tr('plus.f4'), free: true, plus: true },
     { label: tr('plus.f5'), free: false, plus: true },
+    { label: tr('plus.f6'), free: false, plus: true },
+    { label: tr('plus.f7'), free: false, plus: true },
   ];
   const spoken = (v: string | boolean) => (typeof v === 'string' ? v : v ? tr('plus.included') : tr('plus.notIncluded'));
   const cell = (v: string | boolean) =>

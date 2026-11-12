@@ -4,11 +4,10 @@ import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useLocal } from '@/stores/local';
 import { useTheme, useReduceMotion } from '@/theme';
 import { Button, Card, EmptyState, ErrorState, IconButton, Text, toast } from '@/ui';
 import { api, type LikeTarget } from '@/data';
-import { qk, useIntroductions, useLike, usePass } from '@/data/hooks';
+import { qk, useIntroductions, useLike, usePass, useSavedProfiles, useToggleSaved } from '@/data/hooks';
 import { formatTime } from '@/lib/time';
 import { useScreenProtection } from '@/services/screenProtection';
 import { IntroCard } from '@/features/discover/IntroCard';
@@ -25,7 +24,9 @@ export default function Discover() {
   const intros = useIntroductions();
   const like = useLike();
   const pass = usePass();
-  const { savedProfiles, saveProfile, unsaveProfile } = useLocal();
+  const savedList = useSavedProfiles();
+  const toggleSaved = useToggleSaved();
+  const isSaved = (pid: string) => !!savedList.data?.some((s) => s.profile.id === pid);
   const inbox = useQuery({ queryKey: ['inbox'], queryFn: api.inbox.list });
   const unread = (inbox.data ?? []).filter((i) => !i.read).length;
   const [likeTarget, setLikeTarget] = useState<LikeTarget | undefined>();
@@ -127,7 +128,7 @@ export default function Discover() {
           <IntroCard
             key={profile.id}
             profile={profile}
-            saved={!!savedProfiles[profile.id]}
+            saved={isSaved(profile.id)}
             canUndo={canUndo}
             onPhotoChange={setPhotoId}
             onUndo={async () => {
@@ -136,10 +137,9 @@ export default function Discover() {
               qc.invalidateQueries({ queryKey: qk.intros });
             }}
             onSave={() => {
-              if (savedProfiles[profile.id]) return unsaveProfile(profile.id);
-              api.discover.save(profile.id);
-              saveProfile(profile);
-              toast(tr('discover.saved'));
+              const saved = isSaved(profile.id);
+              toggleSaved.mutate({ profileId: profile.id, saved });
+              if (!saved) toast(tr('discover.saved'));
             }}
           />
           {firstPrompt ? (

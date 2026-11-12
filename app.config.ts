@@ -1,4 +1,6 @@
 import type { ExpoConfig } from 'expo/config';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { resolveRuntimeConfig } = require('./src/config/resolve.js') as typeof import('./src/config/resolve');
 
 /**
  * Neeo app config. Native folders are generated (CNG); configure native
@@ -8,6 +10,16 @@ import type { ExpoConfig } from 'expo/config';
  * mirror tokens in src/theme/tokens.ts. They are excluded from the
  * hard-coded-colour check because native config cannot import TS tokens.
  */
+// Fail closed at BUILD time too: a preview/production build that isn't wired to Supabase
+// (or lacks a store key) never gets built. The app re-checks at startup (src/config).
+const runtime = resolveRuntimeConfig({
+  appVariant: process.env.APP_VARIANT,
+  dataMode: process.env.EXPO_PUBLIC_DATA_MODE,
+  supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,
+  supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
+  revenueCatKey: process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY || process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY,
+});
+
 const IS_PROD = process.env.APP_VARIANT === 'production';
 const IS_PREVIEW = process.env.APP_VARIANT === 'preview';
 
@@ -122,7 +134,8 @@ const config: ExpoConfig = {
   experiments: { typedRoutes: true },
   extra: {
     eas: { projectId: process.env.EAS_PROJECT_ID },
-    dataMode: process.env.EXPO_PUBLIC_DATA_MODE ?? 'mock',
+    appVariant: runtime.appVariant,
+    dataMode: runtime.dataMode,
   },
   updates: process.env.EAS_PROJECT_ID ? { url: `https://u.expo.dev/${process.env.EAS_PROJECT_ID}` } : undefined,
 };

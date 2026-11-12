@@ -14,9 +14,13 @@ import {
   type InboxItem,
   type Preferences,
   type SupportTicket,
+  type PreferencePreset,
+  type DatePlan,
 } from './types';
 import { uid } from '@/lib/id';
 import { checkSync } from '@/services/textModeration';
+import { completeness } from './completeness';
+import { isPlusActive, purchases } from '@/services/purchases';
 
 export const MOCK_OTP = '123456';
 /** Mock-only: signing in with this number skips onboarding (store screenshots, demos). */
@@ -126,7 +130,22 @@ export function createMockApi(): NeeoApi & { _state: ReturnType<typeof initialSt
       },
       async setPreferences(p) {
         await delay(120);
+        const old = state.preferences;
+        const turningOn = (p.verifiedOnly && !old.verifiedOnly) || (p.voiceOnly && !old.voiceOnly) || (!!p.travelCity && p.travelCity !== old.travelCity);
+        if (turningOn && !(await hasPlus())) throw new ApiError('plus_required');
         state.preferences = { ...p };
+      },
+      async presets() {
+        return [...state.presets];
+      },
+      async savePreset(name, prefs) {
+        if (!(await hasPlus())) throw new ApiError('plus_required');
+        const preset: PreferencePreset = { id: uid('pre'), name, prefs };
+        state.presets.push(preset);
+        return preset;
+      },
+      async deletePreset(id) {
+        state.presets = state.presets.filter((p) => p.id !== id);
       },
       async review() {
         return { ...state.review };
@@ -380,6 +399,42 @@ export function createMockApi(): NeeoApi & { _state: ReturnType<typeof initialSt
         return { ...t, messages: [...t.messages] };
       },
     },
+    saved: {
+      async profiles() {
+        await delay(80);
+        return [...state.savedProfiles.entries()]
+          .filter(([id]) => !state.blocked.some((b) => b.id === id))
+          .map(([id, savedAt]) => ({ profile: findProfile(id), savedAt }))
+          .sort((a, b) => b.savedAt.localeCompare(a.savedAt));
+      },
+      async saveProfile(profileId) {
+        findProfile(profileId);
+        state.savedProfiles.set(profileId, new Date().toISOString());
+      },
+      async removeProfile(profileId) {
+        state.savedProfiles.delete(profileId);
+      },
+      async plans() {
+        await delay(80);
+        return [...state.plans];
+      },
+      async savePlan(plan) {
+        state.plans = [{ ...plan, savedAt: new Date().toISOString() }, ...state.plans.filter((p) => p.id !== plan.id)];
+      },
+      async removePlan(id) {
+        state.plans = state.plans.filter((p) => p.id !== id);
+      },
+    },
+    notes: {
+      async get(profileId) {
+        return state.notes.get(profileId) ?? '';
+      },
+      async set(profileId, body) {
+        if (body.length > 1000) throw new ApiError('unknown', 'Keep notes under 1000 characters');
+        if (body.trim()) state.notes.set(profileId, body.trim());
+        else state.notes.delete(profileId);
+      },
+    },
     inbox: {
       async list() {
         await delay(80);
@@ -394,6 +449,11 @@ export function createMockApi(): NeeoApi & { _state: ReturnType<typeof initialSt
   return Object.assign(api, { _state: state });
 }
 
+/** Plus comes from the store (mock store in dev), exactly like the server's has_plus(). */
+async function hasPlus() {
+  return isPlusActive((await purchases.getMembership()).status);
+}
+
 function msg(matchId: string, senderId: string, kind: Message['kind'], body: string, createdAt = new Date().toISOString()): Message {
   return { id: uid('msg'), matchId, senderId, kind, body, createdAt };
 }
@@ -405,17 +465,7 @@ function nextBatchTime() {
   return d.toISOString();
 }
 
-export function completeness(me: Pick<MyProfile, 'photos' | 'prompts' | 'verified' | 'dateIdeas' | 'basics'>) {
-  const parts = [
-    Math.min(me.photos.length, 6) / 6,
-    Math.min(me.prompts.length, 3) / 3,
-    me.prompts.some((p) => p.voice) ? 1 : 0,
-    me.verified ? 1 : 0,
-    me.dateIdeas.length > 0 ? 1 : 0,
-    me.basics.length >= 3 ? 1 : 0,
-  ];
-  return Math.round((parts.reduce((a, b) => a + b, 0) / parts.length) * 100) / 100;
-}
+export { completeness };
 
 function initialState() {
   const [maya, ayesha, omar, lena] = seedProfiles as [Profile, Profile, Profile, Profile];
@@ -483,7 +533,11 @@ function initialState() {
     failUploads: false,
     failSends: false,
     outgoingRequests: new Set<string>(),
-    preferences: { genders: ['woman'], ageMin: 24, ageMax: 34, maxKm: 25, intentions: ['long_term', 'life_partner'], verifiedOnly: false } as Preferences,
+    preferences: { genders: ['woman'], ageMin: 24, ageMax: 34, maxKm: 25, intentions: ['long_term', 'life_partner'], verifiedOnly: false, voiceOnly: false, travelCity: null } as Preferences,
+    presets: [] as PreferencePreset[],
+    savedProfiles: new Map<string, string>(),
+    plans: [] as DatePlan[],
+    notes: new Map<string, string>(),
     review: { status: 'active' } as { status: 'active' | 'under_review' | 'suspended'; reason?: string },
     appeals: [] as Appeal[],
     tickets: [] as SupportTicket[],

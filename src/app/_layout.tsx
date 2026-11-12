@@ -1,3 +1,4 @@
+import '@/config'; // validates build configuration first (fails closed outside development)
 import '@/i18n';
 import React, { useEffect, useMemo } from 'react';
 import { StatusBar } from 'expo-status-bar';

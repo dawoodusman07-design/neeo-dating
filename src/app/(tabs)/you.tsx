@@ -6,7 +6,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { useTheme } from '@/theme';
 import { Avatar, Button, Card, Chip, Icon, ListGroup, ListRow, ProgressBar, Text, VerifiedBadge, type IconName } from '@/ui';
-import { DATA_MODE, type MyProfile } from '@/data';
+import { type MyProfile } from '@/data';
+import { runtimeConfig } from '@/config';
 import { useMe } from '@/data/hooks';
 import { aiAssist } from '@/services/aiAssist';
 import { useSettings } from '@/stores/settings';
@@ -93,7 +94,7 @@ export default function You() {
         <ListRow icon="plus" title={tr('you.plus')} subtitle={tr('you.plusSub')} value={membership.data && isPlusActive(membership.data.status) ? tr('common.plusBadge') : undefined} onPress={go(membership.data && membership.data.status !== 'free' ? '/membership' : '/plus')} />
       </ListGroup>
       {!m?.verified ? <Button title={tr('you.getVerified')} icon="verified" variant="text" onPress={go('/verify')} /> : null}
-      {__DEV__ || DATA_MODE === 'mock' ? <Button title="Developer menu" variant="text" onPress={go('/dev')} testID="dev-menu" /> : null}
+      {runtimeConfig.allowMocks ? <Button title="Developer menu" variant="text" onPress={go('/dev')} testID="dev-menu" /> : null}
     </ScrollView>
   );
 }

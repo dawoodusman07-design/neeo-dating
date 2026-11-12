@@ -234,4 +234,88 @@ select pg_temp.as_user(:bob);
 select pg_temp.expect(exists (select 1 from inbox_items where kind = 'appeal_outcome'), 'appeal outcome is delivered to the appellant');
 reset role;
 
+-- ---- Plus model: enforced server-side; free users can turn Plus filters off, never on ----
+update preferences set genders = '{man}', age_min = 25, age_max = 40, max_km = 500 where user_id = :carol;
+update profiles set city = 'Lahore' where id = :alice;
+do $$ begin
+  perform set_config('request.jwt.claim.sub', 'cccccccc-0000-0000-0000-000000000003', false);
+  set role authenticated;
+  begin
+    update public.preferences set verified_only = true where user_id = auth.uid();
+    raise exception 'FAIL: free user turned on an advanced filter';
+  exception when insufficient_privilege then raise notice 'ok - free users cannot turn on advanced filters';
+  end;
+  begin
+    update public.preferences set travel_city = 'Lahore' where user_id = auth.uid();
+    raise exception 'FAIL: free user turned on travel mode';
+  exception when insufficient_privilege then raise notice 'ok - free users cannot turn on travel mode';
+  end;
+  begin
+    update public.preferences set presets = '[{"name":"Weekend"}]' where user_id = auth.uid();
+    raise exception 'FAIL: free user saved a preset';
+  exception when insufficient_privilege then raise notice 'ok - free users cannot save preference presets';
+  end;
+  reset role;
+end $$;
+select pg_temp.as_user(:alice);
+insert into likes (from_id, to_id, comment) values (:alice, :carol, 'Your Sunday prompt!');
+reset role;
+select pg_temp.as_user(:carol);
+select pg_temp.expect(not has_plus(:carol), 'control: Carol has no Plus');
+select pg_temp.expect((select comment from likes where to_id = :carol and from_id = :alice) = 'Your Sunday prompt!', 'free user sees who liked them, with the comment');
+reset role;
+insert into entitlements (user_id, is_plus, expires_at) values (:carol, true, now() + interval '30 days');
+select pg_temp.as_user(:carol);
+update preferences set verified_only = true where user_id = :carol;
+select pg_temp.expect((select verified_only from preferences) = true, 'Plus member can turn on advanced filters');
+select pg_temp.expect(not exists (select 1 from daily_introductions(8) where id = :alice), 'advanced filter (verified only) hides unverified Alice');
+update preferences set verified_only = false, travel_city = 'Lahore' where user_id = :carol;
+select pg_temp.expect(exists (select 1 from daily_introductions(8) where id = :alice), 'travel mode introduces people in the chosen city');
+update preferences set travel_city = 'Karachi' where user_id = :carol;
+select pg_temp.expect(not exists (select 1 from daily_introductions(8) where id = :alice), 'travel mode excludes people outside the chosen city');
+update preferences set travel_city = null, verified_only = true, presets = '[{"name":"Weekend"}]' where user_id = :carol;
+select pg_temp.expect(jsonb_array_length((select presets from preferences)) = 1, 'Plus member can save a preset');
+reset role;
+update entitlements set expires_at = now() - interval '1 day' where user_id = :carol;
+select pg_temp.as_user(:carol);
+select pg_temp.expect(not has_plus(:carol), 'expired entitlement is not Plus');
+select pg_temp.expect(exists (select 1 from daily_introductions(8) where id = :alice), 'after Plus ends, stored Plus filters are ignored');
+update preferences set verified_only = false, presets = '[]' where user_id = :carol;
+select pg_temp.expect((select verified_only from preferences) = false, 'after Plus ends, the user can still turn filters off and delete presets');
+reset role;
+
+-- ---- Saved profiles, date plans and private notes: owner only ----
+select pg_temp.as_user(:carol);
+insert into saved_profiles (user_id, profile_id) values (:carol, :alice);
+insert into profile_notes (user_id, profile_id, body) values (:carol, :alice, 'Loves Rouge Park');
+insert into date_plans (user_id, partner_name, idea) values (:carol, 'Alice', 'Coffee and a walk');
+select pg_temp.expect((select count(*) from saved_profiles) = 1 and (select count(*) from profile_notes) = 1 and (select count(*) from date_plans) = 1, 'owner reads their saved profiles, notes and plans');
+reset role;
+select pg_temp.as_user(:alice);
+select pg_temp.expect((select count(*) from saved_profiles) = 0, 'saved profiles are private (Alice cannot see that Carol saved her)');
+select pg_temp.expect((select count(*) from profile_notes) = 0, 'private notes are private (the subject cannot read them)');
+select pg_temp.expect((select count(*) from date_plans) = 0, 'date plans are private');
+reset role;
+do $$ declare mid uuid; begin
+  select id into mid from matches limit 1;
+  perform set_config('request.jwt.claim.sub', 'cccccccc-0000-0000-0000-000000000003', false);
+  set role authenticated;
+  begin
+    insert into public.saved_profiles (user_id, profile_id) values (auth.uid(), 'bbbbbbbb-0000-0000-0000-000000000002');
+    raise exception 'FAIL: saved a suspended/invisible profile';
+  exception when insufficient_privilege then raise notice 'ok - cannot save a profile you cannot see';
+  end;
+  begin
+    insert into public.date_plans (user_id, match_id, partner_name, idea) values (auth.uid(), mid, 'Bob', 'Snoop');
+    raise exception 'FAIL: attached a plan to someone else''s match';
+  exception when insufficient_privilege then raise notice 'ok - date plans can only reference your own matches';
+  end;
+  begin
+    insert into public.profile_notes (user_id, profile_id, body) values ('aaaaaaaa-0000-0000-0000-000000000001', 'cccccccc-0000-0000-0000-000000000003', 'forged');
+    raise exception 'FAIL: wrote a note as someone else';
+  exception when insufficient_privilege then raise notice 'ok - cannot write notes as another user';
+  end;
+  reset role;
+end $$;
+
 \echo 'ALL RLS TESTS PASSED'

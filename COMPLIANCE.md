@@ -20,7 +20,7 @@ Each item lists the file or screen that satisfies it. ✅ implemented in code ·
 | App Privacy "nutrition label" | 🟡 | Answers in `STORE_LISTING.md` → enter in App Store Connect |
 | Purpose strings that explain WHY | ✅ | `app.config.ts` infoPlist + plugin configs: camera, photos, microphone, location (When In Use), contacts; notifications are explained in-app first (`onboarding/notifications.tsx`) |
 | Location When-In-Use only, rounded distance | ✅ | `expo-location` foreground only, background disabled, `Accuracy.Low`; server returns only `rounded_distance_km()` (tested: no lat/lng readable by others) |
-| Reviewer demo account + OTP bypass for ONE number | 🟡 | `supabase/config.toml [auth.sms.test_otp]` (+1 555 555 0100 → 123456); notes in `STORE_LISTING.md` |
+| Reviewer demo account + OTP bypass for ONE number | 🟡 | Test number/code set only in the hosted Supabase dashboard, rotated after each review, never committed (README → “App Review test account”); notes in `STORE_LISTING.md` |
 
 ## Google Play
 
