@@ -14,7 +14,7 @@ export default function TabsLayout() {
       <Tabs.Screen name="discover" options={{ title: t('discover.tab') }} />
       <Tabs.Screen name="likes" options={{ title: t('likes.title'), tabBarBadge: likes.data?.length || undefined }} />
       <Tabs.Screen name="chats" options={{ title: t('chats.title'), tabBarBadge: unread || undefined }} />
-      <Tabs.Screen name="you" options={{ title: t('you.title') }} />
+      <Tabs.Screen name="you" options={{ title: t('you.tab') }} />
     </Tabs>
   );
 }
