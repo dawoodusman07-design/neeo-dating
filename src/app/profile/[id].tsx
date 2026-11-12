@@ -5,9 +5,10 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/theme';
 import { Button, Card, Chip, EmptyState, IconButton, ProfilePhoto, Sheet, Text, TextField, toast } from '@/ui';
-import { useLocal } from '@/stores/local';
 import { type LikeTarget } from '@/data';
-import { useLike, useMe, useProfile } from '@/data/hooks';
+import { useLike, useMe, useNote, useProfile, useSavedProfiles, useToggleSaved } from '@/data/hooks';
+import { api } from '@/data';
+import { useQueryClient } from '@tanstack/react-query';
 import { useScreenProtection } from '@/services/screenProtection';
 import { NameLine, ProfileView } from '@/features/profile/ProfileView';
 import { LikeSheet } from '@/features/discover/LikeSheet';
@@ -25,7 +26,11 @@ export default function ProfileDetail() {
   const [target, setTarget] = useState<LikeTarget>();
   const [comment, setComment] = useState('');
   const me = useMe();
-  const { notes, setNote, savedProfiles, saveProfile, unsaveProfile } = useLocal();
+  const qc = useQueryClient();
+  const note = useNote(id);
+  const savedList = useSavedProfiles();
+  const toggleSaved = useToggleSaved();
+  const isSaved = !!savedList.data?.some((s) => s.profile.id === id);
   const [notesOpen, setNotesOpen] = useState(false);
   const [noteDraft, setNoteDraft] = useState('');
   useScreenProtection(`profile-${id}`);
@@ -65,18 +70,14 @@ export default function ProfileDetail() {
         </Text>
         <IconButton
           icon="save"
-          label={savedProfiles[id] ? tr('profile.saved') : tr('profile.save')}
-          selected={!!savedProfiles[id]}
+          label={isSaved ? tr('profile.saved') : tr('profile.save')}
+          selected={isSaved}
           onPress={() => {
-            if (!q.data) return;
-            if (savedProfiles[id]) unsaveProfile(id);
-            else {
-              saveProfile(q.data);
-              toast(tr('profile.saved'));
-            }
+            toggleSaved.mutate({ profileId: id, saved: isSaved });
+            if (!isSaved) toast(tr('profile.saved'));
           }}
         />
-        <IconButton icon="info" label={tr('profile.notes')} onPress={() => { setNoteDraft(notes[id] ?? ''); setNotesOpen(true); }} testID="profile-notes" />
+        <IconButton icon="info" label={tr('profile.notes')} onPress={() => { setNoteDraft(note.data ?? ''); setNotesOpen(true); }} testID="profile-notes" />
         <IconButton icon="more" label={tr('profile.more')} onPress={() => setMenu(true)} testID="profile-more" />
       </View>
       <ScrollView contentContainerStyle={{ padding: t.space[4], gap: t.space[4], paddingBottom: t.space[8] }}>
@@ -105,10 +106,10 @@ export default function ProfileDetail() {
             </View>
           </Card>
         ) : null}
-        {notes[id] ? (
+        {note.data ? (
           <Card>
             <Text variant="caption" color="textMuted">{tr('profile.notes')}</Text>
-            <Text>{notes[id]}</Text>
+            <Text>{note.data}</Text>
           </Card>
         ) : null}
         <ProfileView profile={p} skipFirstPhoto onLikeTarget={canLike ? setTarget : undefined} />
@@ -135,10 +136,15 @@ export default function ProfileDetail() {
         <TextField label={tr('profile.notes')} hint={tr('profile.notesHint')} value={noteDraft} onChangeText={setNoteDraft} multiline maxLength={500} autoComplete="off" testID="notes-input" />
         <Button
           title={tr('common.save')}
-          onPress={() => {
-            setNote(id, noteDraft.trim());
-            setNotesOpen(false);
-            toast(tr('profile.notesSaved'));
+          onPress={async () => {
+            try {
+              await api.notes.set(id, noteDraft.trim());
+              await qc.invalidateQueries({ queryKey: ['note', id] });
+              setNotesOpen(false);
+              toast(tr('profile.notesSaved'));
+            } catch {
+              toast(tr('common.genericError'), 'error');
+            }
           }}
         />
       </Sheet>

@@ -51,7 +51,7 @@ const DEVICES = [
     await page.waitForTimeout(400);
     await page.goBack();
     await page.getByRole('tab', { name: /^You/ }).click();
-    await page.getByRole('button', { name: 'Photo privacy' }).click();
+    await page.getByRole('button', { name: /^Privacy. / }).click();
     await shot('photo-privacy');
     console.log(`✓ ${d.name}: ${n} screenshots`);
   }

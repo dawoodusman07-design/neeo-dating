@@ -32,7 +32,7 @@ const initial = {
   pronouns: '',
   intentionNote: '',
   genderText: '',
-  prefs: { genders: [], ageMin: 24, ageMax: 38, maxKm: 25, intentions: ['long_term', 'life_partner', 'figuring_out'], verifiedOnly: false } as Preferences,
+  prefs: { genders: [], ageMin: 24, ageMax: 38, maxKm: 25, intentions: ['long_term', 'life_partner', 'figuring_out'], verifiedOnly: false, voiceOnly: false, travelCity: null } as Preferences,
   photos: [] as DraftPhoto[],
   prompts: [] as DraftPrompt[],
   dateIdeas: [] as string[],

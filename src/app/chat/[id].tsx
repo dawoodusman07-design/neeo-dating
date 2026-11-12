@@ -38,7 +38,6 @@ export default function Conversation() {
   const aiOn = useSettings((s) => s.aiAssist);
   const draft = useLocal((s) => s.drafts[id] ?? '');
   const setDraft = useLocal((s) => s.setDraft);
-  const savePlan = useLocal((s) => s.savePlan);
   const [text, setTextState] = useState(draft);
   const setText = (v: string) => {
     setTextState(v);
@@ -228,8 +227,14 @@ export default function Conversation() {
               onReport={() => report(item.m.id)}
               onSaveDate={() => {
                 if (!item.m.dateProposal) return;
-                savePlan({ ...item.m.dateProposal, id: item.m.id, matchId: id, name: p.firstName, savedAt: new Date().toISOString() });
-                toast(tr('chat.dateSaved'), 'success');
+                const d = item.m.dateProposal;
+                api.saved
+                  .savePlan({ id: item.m.id, matchId: id, name: p.firstName, idea: d.idea, when: d.when, place: d.place })
+                  .then(() => {
+                    qc.invalidateQueries({ queryKey: ['saved', 'plans'] });
+                    toast(tr('chat.dateSaved'), 'success');
+                  })
+                  .catch(() => toast(tr('common.genericError'), 'error'));
               }}
               onRespondDate={async (status) => {
                 if (status === 'counter') return setPropose(true);

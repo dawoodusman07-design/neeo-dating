@@ -8,8 +8,11 @@ appId: app.neeo.dev
 - tapOn: { id: "send-code" }
 - tapOn: { id: "otp-input" }
 - inputText: "123456"
+# Seeing who liked you is free: the Likes tab shows names and comments without Plus
 - tapOn: "Likes"
-- tapOn: { id: "likes-upsell" }
+- assertVisible: "Lena, 29"
+- tapOn: "You"
+- tapOn: "Neeo Plus"
 - assertVisible: "A little more convenience"
 - tapOn: { id: "plus-compare" }
 - tapOn: { id: "plus-review" }

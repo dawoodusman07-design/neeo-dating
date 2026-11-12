@@ -34,10 +34,22 @@ export type Preferences = {
   ageMax: number;
   maxKm: number;
   intentions: Intention[];
-  verifiedOnly: boolean; // Plus
+  // ---- Neeo Plus (advanced filters + travel mode). Enforced server-side. ----
+  verifiedOnly: boolean;
+  voiceOnly: boolean;
+  /** Travel mode: meet people in another city before you arrive. null = off. */
+  travelCity: string | null;
 };
 
+/** Free users can turn these OFF but never ON (server enforces the same rule). */
+export const PLUS_PREFERENCE_FIELDS = ['verifiedOnly', 'voiceOnly', 'travelCity'] as const;
+export const usesPlusFilters = (p: Pick<Preferences, 'verifiedOnly' | 'voiceOnly' | 'travelCity'>) => p.verifiedOnly || p.voiceOnly || !!p.travelCity;
+
 export type PreferencePreset = { id: string; name: string; prefs: Preferences };
+
+/** Synced to Supabase (owner-only RLS). */
+export type SavedProfile = { profile: Profile; savedAt: string };
+export type DatePlan = { id: string; matchId: string | null; name: string; idea: string; when?: string; place?: string; savedAt: string };
 
 export type MyProfile = Profile & {
   gender?: Gender;
@@ -172,6 +184,7 @@ export type ApiErrorCode =
   | 'daily_limit'
   | 'rate_limited'
   | 'send_failed'
+  | 'plus_required'
   | 'unknown';
 
 export class ApiError extends Error {
