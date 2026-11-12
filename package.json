@@ -74,7 +74,8 @@
     "e2e": "maestro test maestro/",
     "test:rls": "supabase/tests/run-rls-tests.sh",
     "e2e:web": "expo export --platform web --output-dir dist-web && node scripts/e2e-web.cjs dist-web",
-    "screenshots": "expo export --platform web --output-dir dist-web && node scripts/store-screenshots.cjs dist-web store/screenshots"
+    "screenshots": "expo export --platform web --output-dir dist-web && node scripts/store-screenshots.cjs dist-web store/screenshots",
+    "gap-report": "python3 -I scripts/extract-svg-text.py && node scripts/gap-report.mjs"
   },
   "private": true,
   "jest": {

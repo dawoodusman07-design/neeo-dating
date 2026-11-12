@@ -1,0 +1,408 @@
+[
+  {
+    "id": "01",
+    "name": "Welcome",
+    "title": "Make room for something real.",
+    "body": "Meet people with shared intentions.\nYour boundaries belong to you.",
+    "cta": "Get started"
+  },
+  {
+    "id": "02",
+    "name": "Sign in",
+    "title": "Welcome back",
+    "body": "Continue with your phone number.\nYour profile stays private while signing in.",
+    "cta": "Continue"
+  },
+  {
+    "id": "03",
+    "name": "Phone number",
+    "title": "Your number stays private",
+    "body": "Country code +1\nPhone number 416 555 0123\nWe use this to send a sign-in code.",
+    "cta": "Send code"
+  },
+  {
+    "id": "04",
+    "name": "Verify phone",
+    "title": "Check your messages",
+    "body": "Enter the 6-digit code\nResend code in 30 seconds\nChange phone number",
+    "cta": "Verify code"
+  },
+  {
+    "id": "05",
+    "name": "Code error",
+    "title": "That code did not work",
+    "body": "Check the code and try again.\nYou can request a new code after the timer.",
+    "cta": "Try again"
+  },
+  {
+    "id": "06",
+    "name": "Age eligibility",
+    "title": "Dating for adults",
+    "body": "Date of birth: DD / MM / YYYY\nYou must be 18 or older to join.",
+    "cta": "Continue"
+  },
+  {
+    "id": "07",
+    "name": "Not eligible",
+    "title": "You cannot join yet",
+    "body": "Neeo Dating is for adults aged 18+.\nNo dating profile has been created.",
+    "cta": "Back to welcome"
+  },
+  {
+    "id": "08",
+    "name": "Your identity",
+    "title": "Introduce yourself",
+    "body": "Name: Alex\nPronouns: They / them (optional)\nGender: Choose how you identify",
+    "cta": "Continue"
+  },
+  {
+    "id": "09",
+    "name": "Your intention",
+    "title": "Find your kind of connection",
+    "body": "Long-term relationship\nExploring my intentions\nTell us in your own words",
+    "cta": "Continue"
+  },
+  {
+    "id": "10",
+    "name": "Who you meet",
+    "title": "Your preferences",
+    "body": "People you want to meet\nAge range: 25\u201334\nUpdate these choices at any time.",
+    "cta": "Continue"
+  },
+  {
+    "id": "11",
+    "name": "Location choice",
+    "title": "Find people nearby",
+    "body": "Use approximate location or select a city.\nYour exact location is never shown.",
+    "cta": "Choose Toronto"
+  },
+  {
+    "id": "12",
+    "name": "Location unavailable",
+    "title": "Choose your city instead",
+    "body": "Location permission is unavailable.\nSearch city: Toronto\nYou can continue without device location.",
+    "cta": "Use Toronto"
+  },
+  {
+    "id": "13",
+    "name": "Photo setup",
+    "title": "Your profile, your choice",
+    "body": "Add at least one clear photo.\nChoose which photos stay private.\nShare private photos match by match.",
+    "cta": "Add photo"
+  },
+  {
+    "id": "14",
+    "name": "Upload failed",
+    "title": "Your photo did not upload",
+    "body": "Your other photos are safe.\nCheck your connection or choose another.",
+    "cta": "Retry upload"
+  },
+  {
+    "id": "15",
+    "name": "Your prompts",
+    "title": "Give someone a starting point",
+    "body": "My kind of Sunday\nA trail, good coffee, and no plans after four.\nAdd a second prompt",
+    "cta": "Save prompts"
+  },
+  {
+    "id": "16",
+    "name": "Profile review",
+    "title": "Ready to say hello?",
+    "body": "Alex, 28 \u00b7 Toronto\nLong-term relationship\nReview photos and edit your answers.",
+    "cta": "Publish profile"
+  },
+  {
+    "id": "17",
+    "name": "Community agreement",
+    "title": "Care starts with respect",
+    "body": "Be honest. Respect consent and boundaries.\nReview community rules and privacy terms.\nAgree only after reading the linked policies.",
+    "cta": "Agree and continue"
+  },
+  {
+    "id": "18",
+    "name": "Notifications",
+    "title": "Never miss a thoughtful hello",
+    "body": "Choose whether to hear about matches.\nQuiet hours and notification types are editable.",
+    "cta": "Choose notifications"
+  },
+  {
+    "id": "19",
+    "name": "No matches",
+    "title": "A little more room to connect",
+    "body": "No introductions fit these preferences yet.\nTry a wider area or check back later.",
+    "cta": "Edit preferences"
+  },
+  {
+    "id": "20",
+    "name": "Daily complete",
+    "title": "Take your time",
+    "body": "You have seen today\u2019s introductions.\nExisting likes and conversations stay available.",
+    "cta": "Open chats"
+  },
+  {
+    "id": "21",
+    "name": "Offline",
+    "title": "Connection interrupted",
+    "body": "Your draft is kept on this device.\nReconnect before sending.",
+    "cta": "Retry connection"
+  },
+  {
+    "id": "22",
+    "name": "Photo request",
+    "title": "Private by choice",
+    "body": "Ask Chris for photo access.\nThey choose whether to share.\nRequesting never reveals their photos.",
+    "cta": "Request access"
+  },
+  {
+    "id": "23",
+    "name": "Photo access",
+    "title": "You decide who sees your photos",
+    "body": "Maya \u00b7 Access granted\nChris \u00b7 Request pending\nRevoke a grant whenever you want.",
+    "cta": "Manage access"
+  },
+  {
+    "id": "24",
+    "name": "Safety centre",
+    "title": "Your boundaries matter",
+    "body": "Report a profile or conversation\nBlock someone or review an ended connection\nThese controls are always free.",
+    "cta": "Review a connection"
+  },
+  {
+    "id": "25",
+    "name": "Report",
+    "title": "Tell us what happened",
+    "body": "Choose a reason\nAdd context (optional)\nInclude relevant messages with your report",
+    "cta": "Review report"
+  },
+  {
+    "id": "26",
+    "name": "Report review",
+    "title": "Ready to submit?",
+    "body": "Review the reason and included messages.\nYou can block this person separately.\nReports are reviewed by the support team.",
+    "cta": "Submit report"
+  },
+  {
+    "id": "27",
+    "name": "Report received",
+    "title": "Thank you for telling us",
+    "body": "Your report has been received.\nWe will update you when there is an outcome.\nYou can still block this person.",
+    "cta": "Back to safety"
+  },
+  {
+    "id": "28",
+    "name": "Block confirmation",
+    "title": "Block Maya?",
+    "body": "They cannot contact you in Neeo.\nYour conversation leaves your inbox.\nYou can review blocked accounts in Settings.",
+    "cta": "Block Maya"
+  },
+  {
+    "id": "29",
+    "name": "Unmatch confirmation",
+    "title": "End this connection?",
+    "body": "This removes the match and conversation.\nYou can still report an ended connection.\nThis action cannot be undone.",
+    "cta": "End connection"
+  },
+  {
+    "id": "30",
+    "name": "Neeo Plus",
+    "title": "A little more convenience",
+    "body": "Core matching, chat, privacy and safety: free.\nPlus adds advanced preference filters\nand saved preference presets.",
+    "cta": "Compare plans"
+  },
+  {
+    "id": "31",
+    "name": "Plan comparison",
+    "title": "Choose what suits you",
+    "body": "Free: introductions, likes and conversations\nPlus: advanced filters and saved presets\nNo payment is needed to reply to a match.",
+    "cta": "Review monthly plan"
+  },
+  {
+    "id": "32",
+    "name": "Review purchase",
+    "title": "Neeo Plus \u00b7 Monthly",
+    "body": "Illustrative price: US$9.99 per month\nAuto-renews until cancelled. No trial.\nLocal store price must replace this sample.",
+    "cta": "Continue to store"
+  },
+  {
+    "id": "33",
+    "name": "Store checkout",
+    "title": "Confirm in your app store",
+    "body": "Native store purchase sheet goes here.\nShow localized total, billing and renewal terms.\nThis design preview does not charge you.",
+    "cta": "Simulate success"
+  },
+  {
+    "id": "34",
+    "name": "Purchase success",
+    "title": "Welcome to Neeo Plus",
+    "body": "Your convenience features are ready.\nManage your subscription at any time.\nCore safety and privacy remain free.",
+    "cta": "Explore Plus"
+  },
+  {
+    "id": "35",
+    "name": "Purchase cancelled",
+    "title": "No purchase was made",
+    "body": "You can keep using Neeo for free.\nNo new subscription was activated.",
+    "cta": "Continue free"
+  },
+  {
+    "id": "36",
+    "name": "Purchase pending",
+    "title": "Waiting for confirmation",
+    "body": "Your store is still processing this purchase.\nAvoid purchasing again while it is pending.\nFeatures unlock after confirmed entitlement.",
+    "cta": "Check purchase status"
+  },
+  {
+    "id": "37",
+    "name": "Purchase failed",
+    "title": "Purchase could not be completed",
+    "body": "No entitlement was activated.\nCheck your store account or try again later.",
+    "cta": "Try again"
+  },
+  {
+    "id": "38",
+    "name": "Restore purchases",
+    "title": "Already subscribed?",
+    "body": "Restore with the same store account.\nThis does not create a new purchase.",
+    "cta": "Restore"
+  },
+  {
+    "id": "39",
+    "name": "Restore success",
+    "title": "Your Plus access is restored",
+    "body": "Your active purchase is linked again.\nYour renewal date appears in membership.",
+    "cta": "Open membership"
+  },
+  {
+    "id": "40",
+    "name": "Nothing to restore",
+    "title": "No active purchase found",
+    "body": "Check the store account used to subscribe.\nContact support if you have a receipt.",
+    "cta": "Contact support"
+  },
+  {
+    "id": "41",
+    "name": "Membership",
+    "title": "You are on Neeo Plus",
+    "body": "Sample renewal: US$9.99 on 28 November\nReplace with verified store entitlement data.\nRestore or manage your subscription",
+    "cta": "Manage in store"
+  },
+  {
+    "id": "42",
+    "name": "Cancel membership",
+    "title": "Manage renewal in your store",
+    "body": "Open your store subscription settings.\nCancellation stops the next renewal.\nAccess continues until the paid period ends.",
+    "cta": "Open store settings"
+  },
+  {
+    "id": "43",
+    "name": "Cancellation confirmed",
+    "title": "Renewal is off",
+    "body": "Plus remains active until the period ends.\nAfter expiry, your account returns to Free.\nMatches and conversations remain available.",
+    "cta": "Return to account"
+  },
+  {
+    "id": "44",
+    "name": "Billing issue",
+    "title": "Your store needs attention",
+    "body": "Update billing in your store account.\nShow the real entitlement or grace status.\nFree matching and chat remain available.",
+    "cta": "Manage billing"
+  },
+  {
+    "id": "45",
+    "name": "Plus expired",
+    "title": "You are back on Free",
+    "body": "Your paid period has ended.\nMatches, messages and privacy are retained.\nRejoin Plus whenever it suits you.",
+    "cta": "Continue free"
+  },
+  {
+    "id": "46",
+    "name": "Support",
+    "title": "How can we help?",
+    "body": "Choose a topic: Account, Safety, Billing\nDescribe the issue\nAttach a receipt only if relevant.",
+    "cta": "Review request"
+  },
+  {
+    "id": "47",
+    "name": "Support received",
+    "title": "We have your request",
+    "body": "A support reference appears here.\nResponses are available in your help inbox.",
+    "cta": "Back to settings"
+  },
+  {
+    "id": "48",
+    "name": "Account settings",
+    "title": "Your account, your choices",
+    "body": "Edit profile and preferences\nNotifications and blocked accounts\nPause, export data, delete or log out",
+    "cta": "Review account options"
+  },
+  {
+    "id": "49",
+    "name": "Pause profile",
+    "title": "Take a break",
+    "body": "Your profile is hidden from new discovery.\nExisting matches remain available.\nPausing does not cancel a subscription.",
+    "cta": "Pause discovery"
+  },
+  {
+    "id": "50",
+    "name": "Paused",
+    "title": "Room to breathe",
+    "body": "Your profile is paused.\nResume when you feel ready.\nManage any subscription separately.",
+    "cta": "Resume discovery"
+  },
+  {
+    "id": "51",
+    "name": "Export data",
+    "title": "Get a copy of your data",
+    "body": "Verify your account before requesting.\nA private download is prepared when ready.\nDo not send this to another person.",
+    "cta": "Request export"
+  },
+  {
+    "id": "52",
+    "name": "Delete account",
+    "title": "Before you leave",
+    "body": "Deletion removes your account and matches.\nReview retention details in the privacy policy.\nStore subscriptions must be cancelled separately.",
+    "cta": "Review deletion"
+  },
+  {
+    "id": "53",
+    "name": "Delete confirmation",
+    "title": "Delete your Neeo account?",
+    "body": "Verify account ownership to continue.\nThis ends your access and removes your profile.\nRead the deletion and retention notice first.",
+    "cta": "Confirm deletion"
+  },
+  {
+    "id": "54",
+    "name": "Account deleted",
+    "title": "Your profile is removed",
+    "body": "You have been signed out.\nAny policy-based retention is explained in help.\nCheck your store for active subscriptions.",
+    "cta": "Back to welcome"
+  },
+  {
+    "id": "55",
+    "name": "Log out",
+    "title": "See you when you are ready",
+    "body": "Your profile remains active unless paused.\nLogging out does not cancel a subscription.",
+    "cta": "Log out"
+  },
+  {
+    "id": "56",
+    "name": "Session expired",
+    "title": "Sign in again",
+    "body": "Your session ended.\nVerify your number to regain access.",
+    "cta": "Sign in"
+  },
+  {
+    "id": "57",
+    "name": "Account review",
+    "title": "Your account is under review",
+    "body": "Discovery is temporarily unavailable.\nRead the reason supplied by moderation.\nYou can appeal this decision.",
+    "cta": "Submit appeal"
+  },
+  {
+    "id": "58",
+    "name": "Appeal",
+    "title": "Ask for another review",
+    "body": "Explain what you think happened.\nAttach relevant context.\nWe will show updates in your support inbox.",
+    "cta": "Send appeal"
+  }
+]
