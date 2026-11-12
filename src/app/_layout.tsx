@@ -73,12 +73,25 @@ function RootStack({ ready }: { ready: boolean }) {
           <Stack.Screen name="chat/[id]" />
           <Stack.Screen name="match/[id]" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
           <Stack.Screen name="plus" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="membership" />
           <Stack.Screen name="report/[id]" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="block/[id]" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="unblock/[id]" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="unmatch/[id]" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="photo-request/[id]" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="share-photos/[matchId]" options={{ presentation: 'modal' }} />
           <Stack.Screen name="check-in/[matchId]" />
           <Stack.Screen name="settings" />
+          <Stack.Screen name="support" />
+          <Stack.Screen name="notifications" />
+          <Stack.Screen name="saved" />
+          <Stack.Screen name="appeals" />
+          <Stack.Screen name="account-review" />
+          <Stack.Screen name="reauth" />
           <Stack.Screen name="verify" />
         </Stack.Protected>
         <Stack.Screen name="state/[kind]" />
+        <Stack.Screen name="info/[topic]" />
         <Stack.Screen name="dev" />
         <Stack.Screen name="index" />
       </Stack>

@@ -185,7 +185,7 @@ const en = {
     noMatchesAction: 'Edit preferences',
     inbox: 'Notifications',
     photoOf: 'Photo {{n}} of {{total}} of {{name}}',
-    distance: '{{km}} km away',
+    distance: '{{km}} away',
     likeSent: 'Like sent to {{name}}',
     passed: 'Passed',
   },

@@ -45,6 +45,10 @@ export default function Review() {
         prompts: preview.prompts.map((p) => ({ question: p.question, answer: p.answer, voice: p.voice })),
         dateIdeas: draft.dateIdeas,
         city: draft.city ?? '',
+        gender: draft.gender,
+        genderText: draft.genderText || undefined,
+        intentionNote: draft.intentionNote || undefined,
+        preferences: draft.prefs,
       });
       if (draft.verification === 'verified') await api.me.setVerified();
       draft.reset();

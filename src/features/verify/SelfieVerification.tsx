@@ -59,9 +59,9 @@ export function SelfieVerification({ onDone, allowSkip = true }: Props) {
 
   const status: Record<string, { icon: IconName; text: string; tone: 'text' | 'success' | 'danger' }> = {
     checking: { icon: 'faceScan', text: tr('onboarding.verifyChecking'), tone: 'text' },
-    verified: { icon: 'verified', text: tr('onboarding.verifySuccess'), tone: 'success' },
-    retry: { icon: 'retry', text: tr('onboarding.verifyRetry'), tone: 'danger' },
-    manual_review: { icon: 'time', text: tr('onboarding.verifyManual'), tone: 'text' },
+    verified: { icon: 'verified', text: `${tr('onboarding.verifyCompleteTitle')}. ${tr('onboarding.verifySuccess')}`, tone: 'success' },
+    retry: { icon: 'retry', text: `${tr('onboarding.verifyFailedTitle')}. ${tr('onboarding.verifyRetry')}`, tone: 'danger' },
+    manual_review: { icon: 'time', text: `${tr('onboarding.verifyPendingTitle')}. ${tr('onboarding.verifyManual')}`, tone: 'text' },
     failed: { icon: 'error', text: permission && !permission.granted ? tr('onboarding.verifyCameraDenied') : tr('onboarding.verifyRetry'), tone: 'danger' },
   };
   const s = status[phase];

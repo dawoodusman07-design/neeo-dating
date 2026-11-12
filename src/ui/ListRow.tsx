@@ -17,9 +17,10 @@ type Props = {
   destructive?: boolean;
   disabled?: boolean;
   accessibilityHint?: string;
+  testID?: string;
 };
 
-export function ListRow({ title, subtitle, icon, value, onPress, toggle, selected, destructive, disabled, accessibilityHint }: Props) {
+export function ListRow({ title, subtitle, icon, value, onPress, toggle, selected, destructive, disabled, accessibilityHint, testID }: Props) {
   const t = useTheme();
   const body = (pressed: boolean) => (
     <View
@@ -50,7 +51,7 @@ export function ListRow({ title, subtitle, icon, value, onPress, toggle, selecte
           {value}
         </Text>
       ) : null}
-      {toggle ? <Toggle label={title} {...toggle} /> : null}
+      {toggle ? <Toggle label={title} testID={testID} {...toggle} /> : null}
       {selected !== undefined ? (
         <View
           style={{
@@ -82,6 +83,7 @@ export function ListRow({ title, subtitle, icon, value, onPress, toggle, selecte
       accessibilityState={{ disabled: !!disabled, selected, checked: selected }}
       onPress={onPress}
       disabled={disabled}
+      testID={testID}
     >
       {({ pressed }) => body(pressed)}
     </Pressable>

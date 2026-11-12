@@ -14,9 +14,10 @@ type Props = {
   theirName: string;
   onRespondDate: (status: 'accepted' | 'counter') => void;
   onReport: () => void;
+  onSaveDate?: () => void;
 };
 
-export function Bubble({ m, mine, showRead, theirName, onRespondDate, onReport }: Props) {
+export function Bubble({ m, mine, showRead, theirName, onRespondDate, onReport, onSaveDate }: Props) {
   const t = useTheme();
   const { t: tr } = useTranslation();
   const [revealed, setRevealed] = useState(false);
@@ -61,6 +62,7 @@ export function Bubble({ m, mine, showRead, theirName, onRespondDate, onReport }
             </Text>
           </View>
         ) : null}
+        {onSaveDate ? <Button title={tr('chat.saveDate')} variant="text" icon="save" fullWidth={false} style={{ alignSelf: 'flex-start' }} onPress={onSaveDate} /> : null}
         <Text variant="small" color="textMuted">
           {time}
         </Text>

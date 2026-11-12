@@ -5,6 +5,8 @@ import { useTheme } from '@/theme';
 import { Card, Chip, IconButton, ProfilePhoto, Text, VerifiedBadge } from '@/ui';
 import type { LikeTarget, Profile } from '@/data';
 import { VoicePlayer } from '@/features/voice/VoicePlayer';
+import { formatDistance } from '@/lib/distance';
+import { useSettings } from '@/stores/settings';
 
 type Props = {
   profile: Profile;
@@ -101,7 +103,8 @@ export function ProfileView({ profile, onLikeTarget, skipFirstPhoto }: Props) {
 export function NameLine({ profile, onPhoto }: { profile: Profile; onPhoto?: boolean }) {
   const t = useTheme();
   const { t: tr } = useTranslation();
-  const meta = [profile.city, profile.distanceKm ? tr('discover.distance', { km: profile.distanceKm }) : null, profile.pronouns].filter(Boolean).join(' · ');
+  const miles = useSettings((s) => s.miles);
+  const meta = [profile.city, profile.distanceKm ? tr('discover.distance', { km: formatDistance(profile.distanceKm, miles) }) : null, profile.pronouns].filter(Boolean).join(' · ');
   return (
     <View style={{ gap: 2 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.space[2] }}>

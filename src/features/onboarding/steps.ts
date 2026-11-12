@@ -1,4 +1,4 @@
-export const STEPS = ['dob', 'name', 'intention', 'photos', 'prompts', 'date-ideas', 'location', 'agreement', 'notifications', 'verify', 'review'] as const;
+export const STEPS = ['dob', 'name', 'intention', 'preferences', 'photos', 'prompts', 'date-ideas', 'location', 'agreement', 'notifications', 'verify', 'review'] as const;
 export type Step = (typeof STEPS)[number];
 
 export function nextStep(step: Step): `/onboarding/${Step}` {
@@ -7,6 +7,7 @@ export function nextStep(step: Step): `/onboarding/${Step}` {
 }
 
 export const PROMPT_QUESTIONS = [
+  'My kind of Sunday',
   'A perfect Sunday looks like',
   'I’m looking for',
   'My simple pleasures',

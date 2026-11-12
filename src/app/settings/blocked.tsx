@@ -1,16 +1,16 @@
 import React from 'react';
 import { View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { useQueryClient } from '@tanstack/react-query';
 import { useTheme } from '@/theme';
 import { Button, EmptyState, ListGroup, Screen, Text } from '@/ui';
-import { api } from '@/data';
-import { qk, useBlocked } from '@/data/hooks';
+import { useBlocked } from '@/data/hooks';
 
+/** Blocked accounts → unblock confirmation (/unblock/[id]). */
 export default function Blocked() {
   const t = useTheme();
   const { t: tr } = useTranslation();
-  const qc = useQueryClient();
+  const router = useRouter();
   const q = useBlocked();
   const list = q.data ?? [];
   return (
@@ -22,7 +22,7 @@ export default function Blocked() {
           {list.map((b) => (
             <View key={b.id} style={{ flexDirection: 'row', alignItems: 'center', padding: t.space[4], gap: t.space[3] }}>
               <Text variant="bodyStrong" style={{ flex: 1 }}>{b.firstName}</Text>
-              <Button title={tr('settings.unblock')} variant="secondary" fullWidth={false} accessibilityLabel={`${tr('settings.unblock')} ${b.firstName}`} onPress={async () => { await api.safety.unblock(b.id); qc.invalidateQueries({ queryKey: qk.blocked }); }} />
+              <Button title={tr('settings.unblock')} variant="secondary" fullWidth={false} accessibilityLabel={`${tr('settings.unblock')} ${b.firstName}`} onPress={() => router.push({ pathname: '/unblock/[id]', params: { id: b.id, name: b.firstName } })} testID={`unblock-${b.firstName}`} />
             </View>
           ))}
         </ListGroup>

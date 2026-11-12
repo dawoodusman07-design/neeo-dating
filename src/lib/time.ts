@@ -1,5 +1,12 @@
+import { useSettings } from '@/stores/settings';
+
 export function formatTime(iso: string, locale = 'en') {
-  return new Date(iso).toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' });
+  const hour12 = !useSettings.getState().time24;
+  return new Date(iso).toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit', hour12 });
+}
+
+export function formatDate(iso: string, locale = 'en') {
+  return new Date(iso).toLocaleDateString(locale, { day: 'numeric', month: 'long' });
 }
 
 export function dayKey(iso: string) {

@@ -3,7 +3,8 @@ import { Animated, Easing, ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useLocal } from '@/stores/local';
 import { useTheme, useReduceMotion } from '@/theme';
 import { Button, Card, EmptyState, ErrorState, IconButton, Text, toast } from '@/ui';
 import { api, type LikeTarget } from '@/data';
@@ -24,7 +25,9 @@ export default function Discover() {
   const intros = useIntroductions();
   const like = useLike();
   const pass = usePass();
-  const [saved, setSaved] = useState<Set<string>>(new Set());
+  const { savedProfiles, saveProfile, unsaveProfile } = useLocal();
+  const inbox = useQuery({ queryKey: ['inbox'], queryFn: api.inbox.list });
+  const unread = (inbox.data ?? []).filter((i) => !i.read).length;
   const [likeTarget, setLikeTarget] = useState<LikeTarget | undefined>();
   const [likeOpen, setLikeOpen] = useState(false);
   const [canUndo, setCanUndo] = useState(false);
@@ -81,6 +84,10 @@ export default function Discover() {
           {tr('discover.count', { seen: Math.min(data.seen + 1, data.total), total: data.total })}
         </Text>
       </View>
+      <View>
+        <IconButton icon="notifications" label={unread ? `${tr('discover.inbox')}, ${tr('a11y.unread', { count: unread })}` : tr('discover.inbox')} onPress={() => router.push('/notifications')} testID="inbox" />
+        {unread ? <View pointerEvents="none" style={{ position: 'absolute', top: 8, end: 8, width: 10, height: 10, borderRadius: 5, backgroundColor: t.c.action }} /> : null}
+      </View>
       <IconButton icon="preferences" label={tr('discover.filters')} onPress={() => router.push('/settings/preferences')} />
     </View>
   );
@@ -89,12 +96,21 @@ export default function Discover() {
     return (
       <View style={{ flex: 1, backgroundColor: t.c.bg }}>
         {header}
-        <EmptyState
-          icon="time"
-          title={tr('discover.caughtUpTitle')}
-          body={tr('discover.caughtUpBody', { time: formatTime(data.nextAt) })}
-          action={{ title: tr('discover.caughtUpAction'), onPress: () => router.navigate('/chats') }}
-        />
+        {data.seen === 0 ? (
+          <EmptyState
+            icon="discover"
+            title={tr('discover.noMatchesTitle')}
+            body={tr('discover.noMatchesBody')}
+            action={{ title: tr('discover.noMatchesAction'), onPress: () => router.push('/settings/preferences') }}
+          />
+        ) : (
+          <EmptyState
+            icon="time"
+            title={tr('discover.caughtUpTitle')}
+            body={tr('discover.caughtUpBody', { time: formatTime(data.nextAt) })}
+            action={{ title: tr('discover.caughtUpAction'), onPress: () => router.navigate('/chats') }}
+          />
+        )}
       </View>
     );
   }
@@ -111,7 +127,7 @@ export default function Discover() {
           <IntroCard
             key={profile.id}
             profile={profile}
-            saved={saved.has(profile.id)}
+            saved={!!savedProfiles[profile.id]}
             canUndo={canUndo}
             onPhotoChange={setPhotoId}
             onUndo={async () => {
@@ -120,8 +136,9 @@ export default function Discover() {
               qc.invalidateQueries({ queryKey: qk.intros });
             }}
             onSave={() => {
+              if (savedProfiles[profile.id]) return unsaveProfile(profile.id);
               api.discover.save(profile.id);
-              setSaved((s) => new Set(s).add(profile.id));
+              saveProfile(profile);
               toast(tr('discover.saved'));
             }}
           />

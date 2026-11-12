@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Button, Card, Icon, Text, TextField } from '@/ui';
+import { Button, Card, Icon, Text, TextField, fromSchema, useField } from '@/ui';
+import { citySchema } from '@/data';
 import { useTheme } from '@/theme';
 import { useOnboarding } from '@/stores/onboarding';
 import { OnboardingStep } from '@/features/onboarding/OnboardingStep';
@@ -13,7 +14,9 @@ export default function LocationStep() {
   const { t: tr } = useTranslation();
   const router = useRouter();
   const { city: saved, patch } = useOnboarding();
-  const [city, setCity] = useState(saved ?? '');
+  const field = useField(saved ?? '', fromSchema(citySchema));
+  const city = field.value;
+  const setCity = field.setValue;
   const [unavailable, setUnavailable] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -43,10 +46,10 @@ export default function LocationStep() {
       body={tr('onboarding.locationBody')}
       footer={
         <Button
-          title={tr('common.continue')}
-          disabled={!city.trim()}
+          title={city.trim() ? tr('onboarding.useCity', { city: city.trim() }) : tr('common.continue')}
           testID="location-continue"
           onPress={() => {
+            if (!field.check()) return;
             patch({ city: city.trim() });
             router.push(nextStep('location'));
           }}
@@ -61,7 +64,7 @@ export default function LocationStep() {
           <Text color="textMuted">{tr('onboarding.locationUnavailableBody')}</Text>
         </Card>
       ) : null}
-      <TextField label={tr('onboarding.cityLabel')} value={city} onChangeText={setCity} autoComplete="postal-address-locality" testID="city-input" />
+      <TextField label={tr('onboarding.cityLabel')} {...field.props} autoComplete="postal-address-locality" textContentType="addressCity" autoCapitalize="words" testID="city-input" />
     </OnboardingStep>
   );
 }

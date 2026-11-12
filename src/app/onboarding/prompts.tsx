@@ -20,6 +20,7 @@ export default function Prompts() {
     saved.length === 3 ? saved : PROMPT_QUESTIONS.slice(0, 3).map((q) => ({ question: q, answer: '' })),
   );
   const [picking, setPicking] = useState<number | null>(null);
+  const [touched, setTouched] = useState<Set<number>>(new Set());
   const update = (i: number, p: Partial<DraftPrompt>) => setPrompts((ps) => ps.map((x, j) => (j === i ? { ...x, ...p } : x)));
   const valid = prompts.every((p) => promptAnswerSchema.safeParse(p.answer).success);
 
@@ -30,7 +31,7 @@ export default function Prompts() {
       body={tr('onboarding.promptsBody')}
       footer={
         <Button
-          title={tr('common.continue')}
+          title={tr('onboarding.promptsSave')}
           disabled={!valid}
           testID="prompts-continue"
           onPress={() => {
@@ -43,7 +44,18 @@ export default function Prompts() {
       {prompts.map((p, i) => (
         <Card key={i}>
           <ListRow title={p.question} subtitle={tr('onboarding.promptPick')} onPress={() => setPicking(i)} />
-          <TextField label={tr('onboarding.promptAnswer')} value={p.answer} onChangeText={(answer) => update(i, { answer })} multiline maxLength={200} testID={`prompt-answer-${i}`} hint={`${p.answer.length}/200`} />
+          <TextField
+            label={`${tr('onboarding.promptAnswer')}: ${p.question}`}
+            value={p.answer}
+            onChangeText={(answer) => update(i, { answer })}
+            onBlur={() => setTouched((s) => new Set(s).add(i))}
+            error={touched.has(i) ? promptAnswerSchema.safeParse(p.answer).error?.issues[0]?.message : undefined}
+            multiline
+            maxLength={200}
+            autoComplete="off"
+            testID={`prompt-answer-${i}`}
+            hint={tr('common.charCount', { count: p.answer.length, max: 200 })}
+          />
           {p.voiceUri ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.space[2] }}>
               <Text variant="caption" style={{ flex: 1 }}>

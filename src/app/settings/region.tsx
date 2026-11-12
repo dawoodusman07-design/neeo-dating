@@ -19,9 +19,10 @@ const REGIONS = [
   { key: 'SA', label: 'Saudi Arabia' },
 ];
 
+/** Language + Region & formats. */
 export default function Region() {
   const { t } = useTranslation();
-  const { locale, region, set } = useSettings();
+  const { locale, region, time24, miles, set } = useSettings();
   return (
     <Screen title={t('settings.regionTitle')} back>
       <ListGroup title={t('settings.language')} footer={t('settings.rtlNote')}>
@@ -42,6 +43,10 @@ export default function Region() {
         {REGIONS.map((r) => (
           <ListRow key={r.key} title={r.label} selected={region === r.key} onPress={() => set('region', r.key)} />
         ))}
+      </ListGroup>
+      <ListGroup title={t('settings.formats')}>
+        <ListRow title={t('settings.time24')} toggle={{ value: time24, onValueChange: (v) => set('time24', v) }} />
+        <ListRow title={t('settings.distanceMiles')} toggle={{ value: miles, onValueChange: (v) => set('miles', v) }} />
       </ListGroup>
     </Screen>
   );

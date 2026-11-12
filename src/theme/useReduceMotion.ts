@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AccessibilityInfo } from 'react-native';
+import { useSettings } from '@/stores/settings';
 
 /** Honours iOS "Reduce Motion" / Android "Remove animations". */
 export function useReduceMotion() {
@@ -13,5 +14,6 @@ export function useReduceMotion() {
       sub.remove();
     };
   }, []);
-  return reduce;
+  const inApp = useSettings((s) => s.reduceMotion);
+  return reduce || inApp;
 }

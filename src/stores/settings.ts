@@ -25,6 +25,9 @@ export type SettingsState = {
   aiAssist: boolean; // AI profile feedback + conversation starters (opt-in)
   notifications: NotificationPrefs;
   quietHours: { enabled: boolean; start: string; end: string };
+  time24: boolean;
+  miles: boolean;
+  reduceMotion: boolean;
   set: <K extends keyof Omit<SettingsState, 'set' | 'setNotification'>>(key: K, value: SettingsState[K]) => void;
   setNotification: (key: keyof NotificationPrefs, value: boolean) => void;
 };
@@ -47,6 +50,9 @@ export const defaultSettings = {
     productNews: false,
   },
   quietHours: { enabled: false, start: '22:00', end: '08:00' },
+  time24: false,
+  miles: false,
+  reduceMotion: false,
 };
 
 export const useSettings = create<SettingsState>()(

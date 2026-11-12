@@ -2,6 +2,11 @@
  * Distance shown to other users is always rounded so exact location can't be
  * triangulated. (The server also rounds; this is defence in depth.)
  */
+/** Display string honouring the km / miles setting (rounded either way). */
+export function formatDistance(km: number, miles: boolean) {
+  return miles ? `${Math.max(1, Math.round(km * 0.621371))} mi` : `${km} km`;
+}
+
 export function roundDistanceKm(km: number): number {
   if (!Number.isFinite(km) || km < 0) return 0;
   if (km < 2) return 1; // never "0 km"/"0.3 km"
