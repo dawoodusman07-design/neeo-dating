@@ -9,15 +9,17 @@ appId: app.neeo.dev
 - tapOn: { id: "otp-input" }
 - inputText: "123456"
 - tapOn: "You"
+- tapOn: "Settings"
 - scrollUntilVisible: { element: "Delete account" }
 - tapOn: "Delete account"
+- assertVisible: "Before you leave"
 - tapOn: { id: "delete-continue" }
-- tapOn: { id: "delete-otp" }
+- tapOn: { id: "reauth-otp" }
 - inputText: "123456"
-- tapOn: { id: "delete-reauth" }
+- tapOn: { id: "reauth-verify" }
 - tapOn: { id: "delete-confirm" }
 - inputText: "DELETE"
 - tapOn: { id: "delete-final" }
-- assertVisible: "Your account has been deleted"
-- tapOn: "Close"
-- assertVisible: "Something real starts with hello."
+- assertVisible: "Your profile is removed"
+- tapOn: "Back to welcome"
+- assertVisible: "Make room for something real."

@@ -10,7 +10,11 @@ appId: app.neeo.dev
 - inputText: "123456"
 - tapOn: "Likes"
 - tapOn: { id: "likes-upsell" }
-- assertVisible: "Neeo Plus"
-- assertVisible: "Restore purchase"
+- assertVisible: "A little more convenience"
+- tapOn: { id: "plus-compare" }
+- tapOn: { id: "plus-review" }
+- assertVisible: "Auto-renews until cancelled. No trial."
 - tapOn: { id: "plus-continue" }
-- assertVisible: "Welcome to Plus"
+- assertVisible: "Welcome to Neeo Plus"
+- tapOn: "Explore Plus"
+- assertVisible: "You are on Neeo Plus"

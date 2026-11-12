@@ -11,4 +11,4 @@ appId: app.neeo.dev
 - tapOn: { id: "dob-input" }
 - inputText: "20120101"
 - tapOn: { id: "dob-continue" }
-- assertVisible: "Neeo is for adults"
+- assertVisible: "You cannot join yet"

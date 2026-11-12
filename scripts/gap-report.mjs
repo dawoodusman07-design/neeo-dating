@@ -41,7 +41,24 @@ function routeFile(route) {
   if (!route) return null;
   const clean = route.split('?')[0].split('#')[0].replace(/^\//, '');
   const candidates = [`src/app/${clean}.tsx`, `src/app/${clean}/index.tsx`, `src/app/(tabs)/${clean}.tsx`];
-  return candidates.find((c) => existsSync(join(ROOT, c))) ?? null;
+  const literal = candidates.find((c) => existsSync(join(ROOT, c)));
+  if (literal) return literal;
+  // Dynamic segment: /state/blocked → src/app/state/[kind].tsx (the concrete value is checked by contentCheck).
+  const parts = clean.split('/');
+  const last = parts.pop();
+  const dir = join(ROOT, 'src/app', ...parts);
+  if (!last || !existsSync(dir)) return null;
+  const { readdirSync } = require('node:fs');
+  const dyn = readdirSync(dir).find((f) => /^\[[^\]]+\]\.tsx$/.test(f));
+  return dyn ? `src/app/${[...parts, dyn].join('/')}` : null;
+}
+
+/** For dynamic content routes, the concrete state / topic must have copy. Returns a gap note or ''. */
+function contentCheck(route, en) {
+  const m = /^\/(state|info)\/([^/?]+)/.exec(route ?? '');
+  if (!m || m[2].startsWith('[')) return '';
+  const key = m[1] === 'state' ? `states.${m[2]}.title` : `info.${m[2]}.title`;
+  return typeof get(en, key) === 'string' ? '' : `no copy for ${key}`;
 }
 
 // ---------- the mapping (package screen → our route + i18n keys) ----------
@@ -71,13 +88,13 @@ const MAP = {
   '21': { route: '/state/offline', keys: { title: 'states.offline.title', body: 'states.offline.body', cta: 'states.offline.action' } },
   '22': { route: '/photo-request/[id]', keys: { title: 'photoRequest.title', body: 'photoRequest.body', cta: 'photoRequest.cta' } },
   '23': { route: '/settings/photo-privacy', keys: { title: 'privacy.accessTitle', body: 'privacy.accessBody', cta: 'privacy.manageAccess' } },
-  '24': { route: '/settings/safety', keys: { title: 'settings.safetyTitle', body: 'settings.safetyIntro', cta: 'settings.reviewConnection' } },
+  '24': { route: '/settings/safety', keys: { title: 'settings.safetyHeadline', body: 'settings.safetyIntro', cta: 'settings.reviewConnection' } },
   '25': { route: '/report/[id]', keys: { title: 'report.why', body: 'report.details', cta: 'report.review' } },
   '26': { route: '/report/[id]', keys: { title: 'report.reviewTitle', body: 'report.reviewBody', cta: 'report.submit' }, note: 'Step 2 of the report flow' },
   '27': { route: '/report/[id]', keys: { title: 'report.sentTitle', body: 'report.sentBody', cta: 'report.backToSafety' }, note: 'Step 3 of the report flow' },
   '28': { route: '/block/[id]', keys: { title: 'block.title', body: 'block.body', cta: 'block.cta' } },
   '29': { route: '/unmatch/[id]', keys: { title: 'unmatch.title', body: 'unmatch.body', cta: 'unmatch.cta' } },
-  '30': { route: '/plus', keys: { title: 'plus.title', body: 'plus.sub', cta: 'plus.compare' } },
+  '30': { route: '/plus', keys: { title: 'plus.headline', body: 'plus.sub', cta: 'plus.compare' } },
   '31': { route: '/plus/compare', keys: { title: 'plus.compareTitle', body: 'plus.compareBody', cta: 'plus.reviewPlan' } },
   '32': { route: '/plus/review', keys: { title: 'plus.reviewTitle', body: 'plus.renewalShort', cta: 'plus.continueToStore' } },
   '33': { route: '/plus/checkout', keys: { title: 'plus.checkoutTitle', body: 'plus.checkoutBody', cta: 'plus.checkoutCta' }, note: 'Native store sheet is shown by StoreKit / Play Billing; this is the hand-off state' },
@@ -209,8 +226,41 @@ const CONFLICTS = [
   ['Account settings hub', 'Separate "Account settings" screen (48)', 'Grouped settings on the You tab', 'Both: You tab keeps the groups; new Settings → Account hub for account, data and help (you.svg "Settings").'],
 ];
 
+// Why a remaining copy difference is deliberate (id.field → reason). Shown in the report.
+const FORM = 'Package body lists form fields / sample values; ours is the instruction text and the fields are real inputs';
+const DELIBERATE = {
+  '03.body': FORM, '04.body': FORM, '06.body': FORM, '09.body': FORM, '10.body': FORM, '12.body': FORM, '15.body': FORM, '16.body': FORM, '46.body': FORM,
+  '07.body': 'Brand is “Neeo”, not “Neeo Dating”',
+  '11.cta': 'Sample city removed; the button uses approximate location, then “Use <city>”',
+  '13.body': 'Conflict: minimum 3 photos and one privacy switch (see conflicts)',
+  '17.body': 'Same meaning; one sentence instead of three',
+  '18.body': 'Same meaning; covers all notification types the step offers',
+  '18.cta': 'The step shows the type toggles, so the button saves them and then asks the system',
+  '20.body': 'Adds when new introductions arrive',
+  '26.body': 'The block hint is shown under the “Also block” toggle (report.blockHint)',
+  '30.body': 'Conflict: Plus model (see conflicts) — Plus here is more than filters and presets',
+  '31.cta': 'Plan length comes from the store, so the button can’t say “monthly”',
+  '33.body': 'Package text was a design placeholder (“native sheet goes here”)',
+  '33.cta': 'Package CTA was “Simulate success” (design preview only)',
+  '36.body': 'Same meaning, plainer wording',
+  '37.body': 'Adds “you haven’t been charged”',
+  '38.cta': '“Restore purchase” reads better out of context for screen readers',
+  '41.body': 'No hard-coded price or sample date (store data only)',
+  '42.body': 'Same meaning; adds that deleting Neeo doesn’t cancel',
+  '43.body': 'Shows the real end date from the store',
+  '44.body': 'Package placeholder (“Show the real … grace status”) replaced by the real grace-period behaviour',
+  '45.body': 'Same meaning (“kept” vs “retained”)',
+  '47.body': 'Shows the real support reference',
+  '49.body': 'Same meaning (contraction)',
+  '51.body': 'Same meaning; lists what the export contains',
+  '52.body': 'Retention and store-cancellation notes are shown below as their own lines (settings.deleteKeep)',
+  '53.body': 'Verification happens on the step before (/reauth)',
+  '57.body': 'Same meaning; the reason is shown on the same screen',
+  '58.body': 'Adds that a different person reviews appeals; updates go to the help inbox',
+};
+
 // ---------- build ----------
-const norm = (s) => (s ?? '').toLowerCase().replace(/[’‘]/g, "'").replace(/[“”]/g, '"').replace(/\s+/g, ' ').replace(/[^\p{L}\p{N}' ]/gu, '').trim();
+const norm = (s) => (s ?? '').toLowerCase().replace(/[’‘]/g, "'").replace(/[“”]/g, '"').replace(/\s+/g, ' ').replace(/[^\p{L}\p{N}'{} ]/gu, '').replace(/\s+/g, ' ').trim();
 const esc = (s) => String(s ?? '').replace(/\|/g, '\\|').replace(/\n/g, ' / ');
 
 const en = await loadEn();
@@ -234,9 +284,13 @@ for (const item of inventory) {
       continue;
     }
     const theirs = item[field];
-    const same = norm(ours) === norm(theirs) || (field === 'body' && norm(theirs).includes(norm(ours)));
+    // {{placeholders}} in our copy match any sample value in theirs (e.g. {{name}} ↔ Maya).
+    const pattern = new RegExp('^' + norm(ours).split(/\s*\{\{\s*\w+\s*\}\}\s*/).map((x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('.+') + '$');
+    const same = norm(ours) === norm(theirs) || pattern.test(norm(theirs)) || (field === 'body' && norm(theirs).includes(norm(ours)));
     if (!same) diffs.push({ field, theirs, ours, key });
   }
+  const gap = contentCheck(m.route, en);
+  if (gap) missingKeys.push(gap);
   let status = !file ? 'missing' : missingKeys.length ? 'partial' : m.partial ? 'partial' : 'built';
   bump(status);
   const note = [m.note, m.partial, missingKeys.length ? `missing strings: ${missingKeys.join(', ')}` : ''].filter(Boolean).join('; ');
@@ -253,9 +307,10 @@ for (const c of CORE) {
 
 for (const [name, route] of APPENDIX_B) {
   const file = routeFile(route);
-  const status = !file ? 'missing' : PARTIAL[name] ? 'partial' : 'built';
+  const gap = contentCheck(route, en);
+  const status = !file ? 'missing' : gap || PARTIAL[name] ? 'partial' : 'built';
   bump(status);
-  rows.push({ id: 'B', name, route: file ? route : `${route} (not built)`, status, copy: 'from name only', note: PARTIAL[name] ?? '', source: 'appendixB' });
+  rows.push({ id: 'B', name, route: file ? route : `${route} (not built)`, status, copy: 'from name only', note: [PARTIAL[name], gap].filter(Boolean).join('; '), source: 'appendixB' });
 }
 
 // "Vera" (the old brand) must never ship.
@@ -287,7 +342,8 @@ md.push(`| Journey_Inventory.json (01–58) | ${by('inventory').length} | ${tall
 md.push(`| Core photo-led SVGs | ${by('core').length} | ${tally(by('core'))} |`);
 md.push(`| Appendix B (from name only) | ${by('appendixB').length} | ${tally(by('appendixB'))} |`);
 md.push(`| **All** | **${total}** | **${counts.built} built · ${counts.partial} partial · ${counts.missing} missing** |`, '');
-md.push(`Copy: ${copyDiffs.length} title/body/CTA fields differ from the package (listed below; many are deliberate — form placeholders, sample data, or v2 rules).`, '');
+const unexplained = copyDiffs.filter((d) => !DELIBERATE[`${d.id}.${d.field}`]).length;
+md.push(`Copy: ${copyDiffs.length} title/body/CTA fields differ from the package; ${copyDiffs.length - unexplained} have a recorded reason, ${unexplained} unexplained (listed below).`, '');
 md.push(`“Vera” check (whole word, case-insensitive): package inventory + extracted SVG text → ${veraPackage.length ? veraPackage.join(', ') : 'none'}; app source (src/) → ${veraApp.length ? veraApp.join(', ') : 'none'}.`, '');
 
 md.push('## Conflicts between the package and the v2 spec', '');
@@ -301,8 +357,8 @@ for (const r of rows) md.push(`| ${r.id} | ${esc(r.name)} | \`${esc(r.route)}\` 
 md.push('');
 
 md.push('## Copy differences (package vs. ours)', '');
-md.push('| ID | Screen | Field | Package | Ours (i18n key) |', '|---|---|---|---|---|');
-for (const d of copyDiffs) md.push(`| ${d.id} | ${esc(d.name)} | ${d.field} | ${esc(d.theirs)} | ${esc(d.ours)} (\`${d.key}\`) |`);
+md.push('| ID | Screen | Field | Package | Ours (i18n key) | Why different |', '|---|---|---|---|---|---|');
+for (const d of copyDiffs) md.push(`| ${d.id} | ${esc(d.name)} | ${d.field} | ${esc(d.theirs)} | ${esc(d.ours)} (\`${d.key}\`) | ${esc(DELIBERATE[`${d.id}.${d.field}`] ?? '**unexplained — review**')} |`);
 md.push('');
 
 writeFileSync(join(ROOT, 'GAP_REPORT.md'), md.join('\n'));

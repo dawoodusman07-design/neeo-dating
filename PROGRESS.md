@@ -15,6 +15,17 @@ _Last updated: 2026-11-11_
 | `expo export --platform android` | ✅ Hermes bundle builds |
 | Maestro flows (`maestro/`) | ⚠️ Written, **not run** — this environment has no iOS simulator / Android emulator |
 
+## Design package pass (2026-11-12)
+
+The original design package is now in `reference-prototype/`; `npm run gap-report` regenerates `GAP_REPORT.md`.
+
+- **Coverage:** 123 screens checked (58 inventory + 7 core + 58 Appendix B): **119 built, 4 partial, 0 missing**. The partials are deliberate: the Likes blur (Plus-model conflict, needs your decision) and three items stored on-device only (saved profiles, saved date plans, private notes).
+- **Copy:** aligned with the package's tone; 36 fields still differ, each with a recorded reason (form-field samples, sample data, v2 rules, or conflicts).
+- **Conflicts:** 17 listed in `GAP_REPORT.md`. Three need your decision: the Plus model, the minimum photo count and per-photo privacy.
+- **Membership lifecycle (30–45):** every state comes from RevenueCat customer info (`membershipFromEntitlement`, unit-tested). Pending purchases re-sync with "Check purchase status".
+- **Now working states:** OTP rate limit and lockout, photo moderation and reorder, notification preferences, blocked accounts and unblock, export ready/download/expiry, reauthentication failure, support conversation, appeal outcome.
+- **Verification:** Jest 83 tests; RLS suite 54 checks (an earlier commit message said 57 — 54 is the real count); web E2E 19 steps including purchase failed, pending → confirmed, restore none/success, and renewal-off / billing-issue / expired.
+
 ## Phases
 
 ### 1. Foundation — ✅ done
@@ -67,9 +78,8 @@ RevenueCat paywall (comparison table with text alternatives, plan radio group, r
 - **Token change:** dark `actionPressed` was `#C94770` in the brief, which gives only 4.04:1 under `onAction` text. Changed to `#D4507A` (4.57:1) so pressed buttons pass AA. Everything else is as specified.
 - **Photo reordering** uses accessible move-earlier / move-later buttons rather than a drag gesture. A drag gesture (reanimated + gesture-handler) is still to do; the buttons must stay for screen-reader users anyway.
 - `src/data/supabase.ts` type-checks and follows the schema, and the schema/RLS are tested, but the client has **not been run against a live Supabase project** yet. Edge Functions are written but not deployed or tested.
-- Preferences (age range, distance) are UI-only; not yet persisted or applied in `daily_introductions`. Plus is not yet enforced server-side (e.g. 15 vs 8 introductions); `entitlements` table + RevenueCat webhook are in place for it.
-- "Share photos" chip in chat shows a confirmation but does not yet write a `photo_access` grant.
-- Saved-for-later profiles are not persisted server-side.
+- Preferences are saved and applied in `daily_introductions` (RLS-tested). Plus is not yet enforced server-side (e.g. 15 vs 8 introductions); `entitlements` table + RevenueCat webhook are in place for it.
+- Saved profiles, saved date plans and private notes are stored on the device only (not synced).
 - Friend's Take shows on profiles; the invite-a-friend flow is not built. Local events (P3) not started.
 - Waveforms for newly recorded voice clips are placeholders (no amplitude analysis yet).
 - Urdu and Arabic contain only a few strings (fallback to English) and are marked `[TRANSLATION REVIEW]`. RTL layout uses start/end throughout but has not been checked visually on a device.

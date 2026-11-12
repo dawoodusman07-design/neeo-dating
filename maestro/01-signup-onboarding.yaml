@@ -8,15 +8,19 @@ appId: app.neeo.dev
 - tapOn: { id: "send-code" }
 - tapOn: { id: "otp-input" }
 - inputText: "123456"
-- assertVisible: "When’s your birthday?"
+- assertVisible: "Dating for adults"
 - tapOn: { id: "dob-input" }
 - inputText: "19950412"
 - tapOn: { id: "dob-continue" }
 - tapOn: { id: "name-input" }
 - inputText: "Sam"
+- tapOn: "Man"
 - tapOn: { id: "name-continue" }
 - tapOn: "Long-term relationship"
 - tapOn: { id: "intention-continue" }
+# Who you meet (package 10)
+- tapOn: "Woman"
+- tapOn: { id: "prefs-continue" }
 # Photos: pick 3 from the simulator library (seeded in CI with `xcrun simctl addmedia`)
 - repeat:
     times: 3

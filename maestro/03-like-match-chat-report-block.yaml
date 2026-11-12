@@ -30,8 +30,11 @@ appId: app.neeo.dev
 - tapOn: { id: "chat-safety" }
 - tapOn: "Report"
 - tapOn: "Harassment or hateful messages"
+- tapOn: { id: "report-review" }
+- assertVisible: "Ready to submit?"
 - tapOn: { id: "report-submit" }
-- assertVisible: "Thanks for telling us"
-- tapOn: "Done"
+- assertVisible: "Thank you for telling us"
+- tapOn: "Back to safety"
+- back
 - tapOn: "Chats"
 - assertNotVisible: { id: "chat-row-Maya" }
