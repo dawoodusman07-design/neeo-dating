@@ -21,7 +21,7 @@
 
 ## Description
 
-Something real starts with hello.
+Make room for something real.
 
 Neeo is a dating app for people who want something real. Every day you get a small set of thoughtful introductions — not an endless feed — so you can actually get to know someone.
 
@@ -48,7 +48,9 @@ Neeo is a dating app for people who want something real. Every day you get a sma
 • No reply timers, no streaks, no pressure
 • Plan a first date right in the chat
 
-Neeo Plus adds more daily introductions, see who liked you, advanced preferences and undo. Privacy and safety tools are always free.
+**Free, always:** daily introductions, seeing who liked you and replying, chat, voice notes, date ideas, photo privacy and every safety tool.
+
+**Neeo Plus** adds three optional conveniences: advanced filters (only verified profiles, only profiles with a voice prompt), saved preference presets, and travel mode to meet people in another city before you arrive.
 
 Neeo is for adults 18 and over.
 
@@ -58,7 +60,7 @@ Generated from the app (`npm run screenshots`), in `store/screenshots/`:
 
 | # | Screen | Caption |
 |---|---|---|
-| 1 | Welcome | Something real starts with hello |
+| 1 | Welcome | Make room for something real. |
 | 2 | Discover | A few thoughtful introductions a day |
 | 3 | Profile | Prompts that start real conversations |
 | 4 | Chat with date idea | Plan a first date, no reply timers |

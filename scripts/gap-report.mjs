@@ -127,7 +127,7 @@ const MAP = {
 
 const CORE = [
   { svg: 'discover', name: 'Discover', route: '/discover' },
-  { svg: 'likes', name: 'Likes', route: '/likes', partial: 'Liked-you list is blurred for Free users (v2 spec); the package says viewing and responding to likes stays free — see conflicts' },
+  { svg: 'likes', name: 'Likes', route: '/likes' },
   { svg: 'chats', name: 'Chats', route: '/chats' },
   { svg: 'conversation', name: 'Conversation', route: '/chat/[id]' },
   { svg: 'jamie', name: 'Profile detail (Jamie)', route: '/profile/[id]' },
@@ -198,18 +198,14 @@ const APPENDIX_B = [
 ];
 
 // Known partial implementations (kept here so the report stays honest when re-run).
-const PARTIAL = {
-  'Private profile notes': 'Notes are stored on this device only (not synced)',
-  'Saved date plans': 'Stored on this device only (not synced)',
-  'Saved profiles': 'Stored on this device only (not synced)',
-};
+const PARTIAL = {};
 
 // Every place the package and the v2 spec disagree. Decision follows the rules in the brief:
 // v2 wins for safety / compliance / accessibility; the package wins for copy tone; anything else is flagged for Dawood.
 const CONFLICTS = [
-  ['Plus model', 'Plus = advanced preference filters + saved presets; viewing and responding to likes stays free (README, 30, 31, likes.svg)', 'Plus = see who liked you (Free list blurred), more daily introductions, advanced preferences, undo', 'Product decision, not safety/compliance: kept v2 behaviour, adopted package framing copy ("core matching, chat, privacy and safety stay free"), added "Saved preference presets" as a Plus feature. **Needs your decision.**'],
-  ['Minimum photos', '"Add at least one clear photo" (13)', 'Minimum 3 photos', 'Kept v2 (3): more photos support verification/moderation. Package copy adapted to "at least 3". **Confirm.**'],
-  ['Per-photo privacy', '"Choose which photos stay private. Share private photos match by match" (13, privacy.svg)', 'One "Blur my photos" switch + share/revoke per person', 'Kept v2 (single switch, per-person grants). Per-photo privacy not built. **Confirm.**'],
+  ['Plus model', 'Plus = advanced preference filters + saved presets; viewing and responding to likes stays free (README, 30, 31, likes.svg)', 'Plus = see who liked you (Free list blurred), more daily introductions, advanced preferences, undo', '**Decided (Dawood, 2026-11-12): package model.** Seeing and replying to likes is free (blur removed). Plus = advanced filters, saved presets, travel mode — enforced server-side (preferences_plus_guard, has_plus()).'],
+  ['Minimum photos', '"Add at least one clear photo" (13)', 'Minimum 3 photos', '**Decided: keep 3.** Package copy adapted to "at least 3".'],
+  ['Per-photo privacy', '"Choose which photos stay private. Share private photos match by match" (13, privacy.svg)', 'One "Private photos" switch + share/revoke per person', '**Decided: v1 keeps one switch + per-person sharing.** Per-photo privacy is a v2 item (PROGRESS.md).'],
   ['Intention options', 'Long-term relationship · Exploring my intentions · Tell us in your own words (09)', 'Long-term · Life partner · Figuring it out', 'Kept v2 options (needed for Muslim/Gulf markets: "life partner"); renamed "Figuring it out" → "Exploring my intentions" (package tone) and added the optional "In your own words" field.'],
   ['Gender', '"Gender: Choose how you identify" on Your identity (08)', 'Not in v2 spec', 'Added (needed for "Who you meet"). Optional free-text option included; shown only to you unless you choose to show it.'],
   ['Who you meet', 'Preferences step in onboarding with age range (10)', 'Preferences only in settings', 'Added onboarding step; same data as Settings → Preferences.'],
@@ -222,6 +218,7 @@ const CONFLICTS = [
   ['Incognito', 'Incognito: "Only people you like can see you. Available to everyone for free." (privacy.svg)', '"Who can find me: Everyone / Only people I’ve liked"', 'Same feature; adopted the Incognito name and copy as a switch.'],
   ['Prices', 'US$9.99 / month shown on 32, 41', 'Prices only from the store', 'v2 wins (compliance): no hard-coded prices anywhere; mock store shows "Test price".'],
   ['Sample data', 'Alex, Maya, Jamie, Chris, +1 416 555 0123, renewal 28 November', 'Fictional data only in mock', 'Kept inside src/data/seed.ts / mock.ts only. Placeholders in forms use a generic number.'],
+  ['Welcome headline', '"Make room for something real." (01)', '"Something real starts with hello."', '**Decided: "Make room for something real." everywhere** — app, STORE_LISTING.md, web/index.html, store screenshots.'],
   ['Status bar / colours / 3D icons', 'Fake 9:41 status bar, gradient buttons, 3D emoji icons', 'Native status bar, design tokens, lucide outline icons', 'v2 wins (design system rules in the brief).'],
   ['Account settings hub', 'Separate "Account settings" screen (48)', 'Grouped settings on the You tab', 'Both: You tab keeps the groups; new Settings → Account hub for account, data and help (you.svg "Settings").'],
 ];
@@ -232,13 +229,13 @@ const DELIBERATE = {
   '03.body': FORM, '04.body': FORM, '06.body': FORM, '09.body': FORM, '10.body': FORM, '12.body': FORM, '15.body': FORM, '16.body': FORM, '46.body': FORM,
   '07.body': 'Brand is “Neeo”, not “Neeo Dating”',
   '11.cta': 'Sample city removed; the button uses approximate location, then “Use <city>”',
-  '13.body': 'Conflict: minimum 3 photos and one privacy switch (see conflicts)',
+  '13.body': 'Decided: minimum 3 photos and one privacy switch for v1 (see conflicts)',
   '17.body': 'Same meaning; one sentence instead of three',
   '18.body': 'Same meaning; covers all notification types the step offers',
   '18.cta': 'The step shows the type toggles, so the button saves them and then asks the system',
   '20.body': 'Adds when new introductions arrive',
   '26.body': 'The block hint is shown under the “Also block” toggle (report.blockHint)',
-  '30.body': 'Conflict: Plus model (see conflicts) — Plus here is more than filters and presets',
+  '30.body': 'Same model; the list of Plus features is shown on the screen itself (filters, presets, travel mode)',
   '31.cta': 'Plan length comes from the store, so the button can’t say “monthly”',
   '33.body': 'Package text was a design placeholder (“native sheet goes here”)',
   '33.cta': 'Package CTA was “Simulate success” (design preview only)',
