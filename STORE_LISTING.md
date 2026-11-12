@@ -72,11 +72,12 @@ Sizes: iPhone 6.7" (1290×2796), iPhone 6.5" (1242×2688), Android phone (1080×
 ## App Review notes (App Store Connect / Play)
 
 > Neeo uses phone-number sign-in. Please use this demo account:
-> Phone: **+1 555 555 0100** — verification code: **123456** (fixed test code; no SMS is sent).
+> Phone: **[TEST NUMBER — set in the Supabase dashboard for this review only]** — verification code: **[TEST CODE]** (no SMS is sent).
+> _(Never commit the real values. Rotate them after each review — see README → “App Review test account”.)_
 > After sign-in you'll go through onboarding (DOB must be 18+). Photos are moderated; for review, demo photos are pre-approved.
 > - Report: open any profile → "…" → Report, or in a chat tap the shield icon.
 > - Block: same menus → Block.
-> - Account deletion: You → Delete account (reauthenticate with code 123456 → type DELETE).
+> - Account deletion: You → Delete account (reauthenticate with the test code → type DELETE).
 > - Subscriptions use In-App Purchase via RevenueCat. Restore is on the paywall.
 > - Screenshot protection: on iOS, screenshots cannot be blocked; we blur the app switcher and notify the other person, as stated in the app.
 > Contact: support@neeo.app

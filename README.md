@@ -11,7 +11,9 @@ npm start                 # Expo dev server; press i / a, or scan with a dev bui
 
 The app runs fully offline in **mock mode** by default (`EXPO_PUBLIC_DATA_MODE=mock`): an in-memory backend with seeded profiles, so every screen works in a development build without any keys.
 
-| Mock account | Phone | Code |
+The accounts below exist **only in the in-memory mock backend of development builds**. They do not work against Supabase, and preview/production builds refuse to start in mock mode (see "Build safety" below).
+
+| Mock account (development only) | Phone | Code |
 |---|---|---|
 | New user (goes through onboarding) | any valid number, e.g. `+15555550100` | `123456` |
 | Already onboarded (demo, screenshots) | `+15555550199` | `123456` |
@@ -19,6 +21,21 @@ The app runs fully offline in **mock mode** by default (`EXPO_PUBLIC_DATA_MODE=m
 Five wrong codes lock sign-in for 15 minutes (lockout state). A date of birth under 18 shows the "not eligible" screen.
 
 Native modules used (camera, audio, screen capture, purchases) need a **development build** (`eas build --profile development`) rather than Expo Go.
+
+### Build safety (fails closed)
+
+`APP_VARIANT` (`development` / `preview` / `production`, set per profile in `eas.json`) decides what a build may use. `src/config/resolve.js` checks it both at **build time** (`app.config.ts`) and at **app startup** (`src/config/index.ts`):
+
+- `preview` and `production` must have `EXPO_PUBLIC_DATA_MODE=supabase`, an `https://` `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`, and a RevenueCat key; otherwise the build/app stops with an error listing every missing value.
+- The mock backend, mock store and developer menu are available **only** when `APP_VARIANT=development`. An unknown `APP_VARIANT` is rejected.
+
+### App Review test account
+
+The phone number and code given to Apple/Google reviewers are **never committed** to this repo (not in `supabase/config.toml`, not in docs).
+
+1. Set them only in the **hosted Supabase dashboard**: Authentication → Providers → Phone → *Test phone numbers / OTPs*. Use a number you control that is not a real user's.
+2. Paste them into the App Store Connect / Play Console review notes for that submission only.
+3. **Rotate after each review**: delete the test number (or change its code) in the dashboard as soon as the review finishes, and use a new one for the next submission.
 
 ### Real backend
 

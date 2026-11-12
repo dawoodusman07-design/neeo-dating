@@ -109,4 +109,4 @@ RevenueCat paywall (comparison table with text alternatives, plan radio group, r
 6. **Host `web/`** at `neeo.app` (privacy, terms, community guidelines, safety, child safety, delete-account) and the admin page somewhere private.
 7. **Translations:** native-speaker Urdu and Arabic.
 8. **Device QA:** run `maestro test maestro/` on iOS and Android, VoiceOver/TalkBack passes, 200% text, RTL.
-9. **App Review:** create the reviewer demo account (test number `+1 555 555 0100`, code `123456` in `supabase/config.toml`) and paste the notes from `STORE_LISTING.md`.
+9. **App Review:** create the reviewer test number and code in the hosted Supabase dashboard (never in the repo; rotate after each review, see README) and paste the notes from `STORE_LISTING.md`.

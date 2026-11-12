@@ -19,6 +19,7 @@ import {
 } from './types';
 import { uid } from '@/lib/id';
 import { checkSync } from '@/services/textModeration';
+import { completeness } from './completeness';
 import { isPlusActive, purchases } from '@/services/purchases';
 
 export const MOCK_OTP = '123456';
@@ -464,17 +465,7 @@ function nextBatchTime() {
   return d.toISOString();
 }
 
-export function completeness(me: Pick<MyProfile, 'photos' | 'prompts' | 'verified' | 'dateIdeas' | 'basics'>) {
-  const parts = [
-    Math.min(me.photos.length, 6) / 6,
-    Math.min(me.prompts.length, 3) / 3,
-    me.prompts.some((p) => p.voice) ? 1 : 0,
-    me.verified ? 1 : 0,
-    me.dateIdeas.length > 0 ? 1 : 0,
-    me.basics.length >= 3 ? 1 : 0,
-  ];
-  return Math.round((parts.reduce((a, b) => a + b, 0) / parts.length) * 100) / 100;
-}
+export { completeness };
 
 function initialState() {
   const [maya, ayesha, omar, lena] = seedProfiles as [Profile, Profile, Profile, Profile];

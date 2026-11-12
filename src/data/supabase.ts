@@ -8,7 +8,8 @@ import * as SecureStore from 'expo-secure-store';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { NeeoApi } from './api';
 import { ApiError, type Match, type Message, type Photo, type Profile, type MyProfile, type Preferences, type SupportTicket, type PreferencePreset, type SavedProfile, type DatePlan } from './types';
-import { completeness } from './mock';
+import { completeness } from './completeness';
+import { runtimeConfig } from '@/config';
 
 const SIGNED_URL_TTL = 60 * 10; // 10 minutes
 
@@ -20,9 +21,8 @@ const secureStorage = {
 };
 
 export function createSupabaseClient(): SupabaseClient {
-  const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
-  const key = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) throw new Error('Supabase URL / anon key missing. See .env.example');
+  const { supabaseUrl: url, supabaseAnonKey: key } = runtimeConfig;
+  if (!url || !key) throw new Error('Supabase URL / anon key missing. See .env.example'); // resolveRuntimeConfig fails earlier with details
   return createClient(url, key, {
     auth: { storage: secureStorage, autoRefreshToken: true, persistSession: true, detectSessionInUrl: false },
   });
