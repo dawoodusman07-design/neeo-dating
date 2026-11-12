@@ -10,6 +10,10 @@ import {
   type MyProfile,
   type PhotoAccessRequest,
   type Profile,
+  type Appeal,
+  type InboxItem,
+  type Preferences,
+  type SupportTicket,
 } from './types';
 import { uid } from '@/lib/id';
 import { checkSync } from '@/services/textModeration';
@@ -41,6 +45,11 @@ export function createMockApi(): NeeoApi & { _state: ReturnType<typeof initialSt
       async sendOtp() {
         await delay();
         if (state.otpLockedUntil > Date.now()) throw new ApiError('otp_locked', undefined, Math.ceil((state.otpLockedUntil - Date.now()) / 1000));
+        // Rate limit: at most 3 codes per 10 minutes.
+        const now = Date.now();
+        state.otpSends = state.otpSends.filter((t) => now - t < 10 * 60_000);
+        if (state.otpSends.length >= 3) throw new ApiError('rate_limited', undefined, Math.ceil((state.otpSends[0]! + 10 * 60_000 - now) / 1000));
+        state.otpSends.push(now);
         return { resendInSec: 30 };
       },
       async verifyOtp(phone, code) {
@@ -89,14 +98,38 @@ export function createMockApi(): NeeoApi & { _state: ReturnType<typeof initialSt
           dateIdeas: input.dateIdeas,
           photos: input.photoUris.map((uri) => ({ id: uid('ph'), uri, status: 'pending' as const })),
           prompts: input.prompts.map((p) => ({ id: uid('pr'), ...p })),
+          gender: input.gender,
+          genderText: input.genderText,
+          intentionNote: input.intentionNote,
         });
+        if (input.preferences) state.preferences = input.preferences;
         state.onboarded = true;
         return { ...state.me, completeness: completeness(state.me) };
       },
       async uploadPhoto(localUri) {
         await delay(600);
-        if (localUri.includes('fail')) throw new ApiError('upload_failed');
-        return { id: uid('ph'), status: 'pending' };
+        if (localUri.includes('fail') || state.failUploads) throw new ApiError('upload_failed');
+        const photo = { id: uid('ph'), uri: localUri, status: 'pending' as const };
+        if (state.onboarded) state.me.photos.push(photo);
+        return photo;
+      },
+      async reorderPhotos(ids) {
+        const byId = new Map(state.me.photos.map((p) => [p.id, p]));
+        state.me.photos = ids.map((id) => byId.get(id)).filter((p): p is NonNullable<typeof p> => !!p);
+      },
+      async removePhoto(id) {
+        state.me.photos = state.me.photos.filter((p) => p.id !== id);
+      },
+      async preferences() {
+        await delay(80);
+        return { ...state.preferences };
+      },
+      async setPreferences(p) {
+        await delay(120);
+        state.preferences = { ...p };
+      },
+      async review() {
+        return { ...state.review };
       },
       async setVerified() {
         state.me.verified = true;
@@ -192,8 +225,9 @@ export function createMockApi(): NeeoApi & { _state: ReturnType<typeof initialSt
         if (m) m.closed = true;
       },
       async unmatch(id) {
-        state.matches = state.matches.filter((m) => m.id !== id);
-        delete state.messages[id];
+        const m = state.matches.find((x) => x.id === id);
+        if (m) m.endedAt = new Date().toISOString();
+        state.messages[id] = [];
       },
     },
     messages: {
@@ -203,6 +237,8 @@ export function createMockApi(): NeeoApi & { _state: ReturnType<typeof initialSt
       },
       async send(matchId, input) {
         await delay(150);
+        if (state.failSends) throw new ApiError('send_failed');
+        if (state.matches.find((x) => x.id === matchId)?.endedAt) throw new ApiError('send_failed', 'This connection has ended');
         const m: Message = { ...msg(matchId, state.me.id, input.kind, input.body), voice: input.voice, dateProposal: input.dateProposal };
         (state.messages[matchId] ??= []).push(m);
         // Simulated reply so the realtime path can be exercised in mock mode.
@@ -246,7 +282,10 @@ export function createMockApi(): NeeoApi & { _state: ReturnType<typeof initialSt
         const p = findProfile(profileId);
         if (!state.blocked.some((b) => b.id === profileId)) state.blocked.push({ id: p.id, firstName: p.firstName, blockedAt: new Date().toISOString() });
         const m = state.matches.find((x) => x.profile.id === profileId);
-        if (m) await api.matches.unmatch(m.id);
+        if (m) {
+          state.matches = state.matches.filter((x) => x.id !== m.id);
+          delete state.messages[m.id];
+        }
         state.acted.add(profileId);
       },
       async unblock(profileId) {
@@ -260,6 +299,7 @@ export function createMockApi(): NeeoApi & { _state: ReturnType<typeof initialSt
         await delay();
         const reportId = uid('rp');
         state.reports.push({ id: reportId, profileId, reason, details, messageId, status: 'open' });
+        state.inbox.unshift({ id: uid('in'), kind: 'report_outcome', title: 'Report received', body: 'We’ll update you here when there is an outcome.', createdAt: new Date().toISOString(), read: false });
         return { reportId };
       },
       async createCheckIn(input) {
@@ -272,8 +312,15 @@ export function createMockApi(): NeeoApi & { _state: ReturnType<typeof initialSt
         const c = state.checkIns.find((x) => x.id === id);
         if (c) c.status = 'checked_in';
       },
-      async appeal() {
+      async appeal(body) {
         await delay();
+        const a: Appeal = { id: uid('ap'), body, createdAt: new Date().toISOString(), status: 'open' };
+        state.appeals.unshift(a);
+        return a;
+      },
+      async appeals() {
+        await delay(80);
+        return [...state.appeals];
       },
     },
     privacy: {
@@ -292,8 +339,54 @@ export function createMockApi(): NeeoApi & { _state: ReturnType<typeof initialSt
         const r = state.photoRequests.find((x) => x.id === id);
         if (r) r.status = 'revoked';
       },
-      async requestAccess() {
+      async requestAccess(profileId) {
         await delay();
+        state.outgoingRequests.add(profileId);
+      },
+      async grant(profileId) {
+        await delay();
+        const profile = findProfile(profileId);
+        state.photoRequests.unshift({ id: uid('pa'), profile, direction: 'granted', status: 'shared', createdAt: new Date().toISOString() });
+      },
+    },
+    support: {
+      async create({ topic, body }) {
+        await delay(300);
+        const t: SupportTicket = {
+          id: uid('st'),
+          reference: `NE-${String(Math.floor(100000 + Math.random() * 900000))}`,
+          topic,
+          status: 'open',
+          createdAt: new Date().toISOString(),
+          messages: [{ id: uid('sm'), from: 'me', body, createdAt: new Date().toISOString() }],
+        };
+        state.tickets.unshift(t);
+        return t;
+      },
+      async list() {
+        await delay(80);
+        return state.tickets.map((t) => ({ ...t, messages: [...t.messages] }));
+      },
+      async get(id) {
+        const t = state.tickets.find((x) => x.id === id);
+        if (!t) throw new ApiError('unknown', 'Request not found');
+        return { ...t, messages: [...t.messages] };
+      },
+      async reply(id, body) {
+        const t = state.tickets.find((x) => x.id === id);
+        if (!t) throw new ApiError('unknown', 'Request not found');
+        t.messages.push({ id: uid('sm'), from: 'me', body, createdAt: new Date().toISOString() });
+        t.status = 'open';
+        return { ...t, messages: [...t.messages] };
+      },
+    },
+    inbox: {
+      async list() {
+        await delay(80);
+        return [...state.inbox];
+      },
+      async markAllRead() {
+        state.inbox.forEach((i) => (i.read = true));
       },
     },
   };
@@ -386,5 +479,17 @@ function initialState() {
     ] as PhotoAccessRequest[],
     contactHashes: [] as string[],
     autoReply: true,
+    otpSends: [] as number[],
+    failUploads: false,
+    failSends: false,
+    outgoingRequests: new Set<string>(),
+    preferences: { genders: ['woman'], ageMin: 24, ageMax: 34, maxKm: 25, intentions: ['long_term', 'life_partner'], verifiedOnly: false } as Preferences,
+    review: { status: 'active' } as { status: 'active' | 'under_review' | 'suspended'; reason?: string },
+    appeals: [] as Appeal[],
+    tickets: [] as SupportTicket[],
+    inbox: [
+      { id: 'in_1', kind: 'photo_request_declined', title: 'Photo request', body: 'Chris chose to keep their photos private for now.', createdAt: ago(60 * 20), read: false },
+      { id: 'in_2', kind: 'new_like', title: 'New like', body: 'Someone liked your answer about Sundays.', createdAt: ago(90), read: true },
+    ] as InboxItem[],
   };
 }

@@ -26,7 +26,23 @@ export type Profile = {
   chaperoneEnabled?: boolean;
 };
 
+export type Gender = 'woman' | 'man' | 'nonbinary' | 'self_described';
+
+export type Preferences = {
+  genders: Gender[];
+  ageMin: number;
+  ageMax: number;
+  maxKm: number;
+  intentions: Intention[];
+  verifiedOnly: boolean; // Plus
+};
+
+export type PreferencePreset = { id: string; name: string; prefs: Preferences };
+
 export type MyProfile = Profile & {
+  gender?: Gender;
+  genderText?: string;
+  intentionNote?: string;
   phone: string;
   dob: string;
   completeness: number; // 0..1
@@ -56,6 +72,8 @@ export type Match = {
   lastMessage?: Message;
   unread: number;
   closed?: boolean;
+  /** Set when either person ended the connection (unmatch). The chat is gone but it can still be reported. */
+  endedAt?: string;
 };
 
 export type DateProposal = {
@@ -111,6 +129,37 @@ export type CheckIn = {
 
 export type ModerationAction = 'warn' | 'suspend' | 'ban' | 'dismiss';
 
+export type Appeal = {
+  id: string;
+  body: string;
+  createdAt: string;
+  status: 'open' | 'upheld' | 'overturned';
+  outcomeNote?: string;
+};
+
+export type AccountReview = { status: 'active' | 'under_review' | 'suspended'; reason?: string };
+
+export type SupportTopic = 'account' | 'safety' | 'billing' | 'other';
+export type SupportMessage = { id: string; from: 'me' | 'support'; body: string; createdAt: string };
+export type SupportTicket = {
+  id: string;
+  reference: string;
+  topic: SupportTopic;
+  status: 'open' | 'answered' | 'closed';
+  createdAt: string;
+  messages: SupportMessage[];
+};
+
+export type InboxItem = {
+  id: string;
+  kind: 'report_outcome' | 'photo_request_declined' | 'photo_request_shared' | 'appeal_outcome' | 'support_reply' | 'new_match' | 'new_like';
+  title: string;
+  body: string;
+  createdAt: string;
+  read: boolean;
+  href?: string;
+};
+
 export type ApiErrorCode =
   | 'invalid_code'
   | 'expired_code'
@@ -121,6 +170,8 @@ export type ApiErrorCode =
   | 'not_eligible'
   | 'chat_cap_reached'
   | 'daily_limit'
+  | 'rate_limited'
+  | 'send_failed'
   | 'unknown';
 
 export class ApiError extends Error {
@@ -140,6 +191,16 @@ export const phoneSchema = z
   .regex(/^\+[1-9]\d{7,14}$/, 'Enter your number in international format, e.g. +1 416 555 0100');
 
 export const otpSchema = z.string().regex(/^\d{6}$/, 'Enter the 6-digit code');
+
+export const dobSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Enter your date of birth as YYYY-MM-DD');
+
+export const supportBodySchema = z.string().trim().min(10, 'Tell us a little more (at least 10 characters)').max(2000, 'Keep it under 2000 characters');
+
+export const citySchema = z.string().trim().min(2, 'Enter your city').max(60, 'Keep it under 60 characters');
+
+export const timeSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Use 24-hour time, e.g. 22:00');
+
+export const deleteConfirmSchema = z.string().refine((v) => v.trim().toUpperCase() === 'DELETE', 'Type DELETE to confirm');
 
 export const nameSchema = z.string().trim().min(1, 'Enter your first name').max(30, 'Keep it under 30 characters');
 

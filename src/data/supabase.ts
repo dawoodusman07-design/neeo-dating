@@ -7,7 +7,7 @@ import 'react-native-url-polyfill/auto';
 import * as SecureStore from 'expo-secure-store';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { NeeoApi } from './api';
-import { ApiError, type Match, type Message, type Photo, type Profile, type MyProfile } from './types';
+import { ApiError, type Match, type Message, type Photo, type Profile, type MyProfile, type Preferences, type SupportTicket } from './types';
 import { completeness } from './mock';
 
 const SIGNED_URL_TTL = 60 * 10; // 10 minutes
@@ -194,8 +194,10 @@ export function createSupabaseApi(sb: SupabaseClient = createSupabaseClient()): 
         const { error } = await sb.from('profiles').insert({
           id, first_name: input.firstName, dob: input.dob, pronouns: input.pronouns || null,
           intention: input.intention, city: input.city, date_ideas: input.dateIdeas,
+          gender: input.gender ?? null, gender_text: input.genderText ?? null, intention_note: input.intentionNote ?? null,
         });
         if (error) mapError(error);
+        if (input.preferences) await api.me.setPreferences(input.preferences);
         await sb.from('profile_private').upsert({ user_id: id });
         for (const [i, uri] of input.photoUris.entries()) {
           const path = `${id}/${Date.now()}_${i}.jpg`;
@@ -216,14 +218,43 @@ export function createSupabaseApi(sb: SupabaseClient = createSupabaseClient()): 
         const id = await uid();
         const path = `${id}/${Date.now()}.jpg`;
         await uploadFile('photos', path, localUri, 'image/jpeg');
-        const { data, error } = await sb.from('photos').insert({ user_id: id, storage_path: path }).select('id, status').single();
+        const { count } = await sb.from('photos').select('id', { count: 'exact', head: true }).eq('user_id', id);
+        const { data, error } = await sb.from('photos').insert({ user_id: id, storage_path: path, position: count ?? 0 }).select('id, status').single();
         if (error) mapError(error);
         // moderate-image Edge Function is triggered by a Storage webhook and flips status.
-        return data as { id: string; status: 'pending' };
+        return { id: (data as { id: string }).id, uri: localUri, status: 'pending' as const };
       },
       async setVerified() {
         // Verified is server-managed (column not writable by users). The
         // verify-liveness Edge Function sets it after the vendor confirms.
+      },
+      async reorderPhotos(ids) {
+        await Promise.all(ids.map((pid, position) => sb.from('photos').update({ position }).eq('id', pid)));
+      },
+      async removePhoto(pid) {
+        const { data } = await sb.from('photos').select('storage_path').eq('id', pid).single();
+        await sb.from('photos').delete().eq('id', pid);
+        if (data?.storage_path) await sb.storage.from('photos').remove([data.storage_path]);
+      },
+      async preferences(): Promise<Preferences> {
+        const { data } = await sb.from('preferences').select('*').maybeSingle();
+        return data
+          ? { genders: data.genders, ageMin: data.age_min, ageMax: data.age_max, maxKm: data.max_km, intentions: data.intentions, verifiedOnly: data.verified_only }
+          : { genders: [], ageMin: 18, ageMax: 99, maxKm: 50, intentions: ['long_term', 'life_partner', 'figuring_out'], verifiedOnly: false };
+      },
+      async setPreferences(p) {
+        const id = await uid();
+        const { error } = await sb.from('preferences').upsert({
+          user_id: id, genders: p.genders, age_min: p.ageMin, age_max: p.ageMax, max_km: p.maxKm, intentions: p.intentions,
+          verified_only: p.verifiedOnly, updated_at: new Date().toISOString(),
+        });
+        if (error) mapError(error);
+      },
+      async review() {
+        const { data } = await sb.rpc('my_account_review');
+        const row = (data as { status: string; reason: string | null }[] | null)?.[0];
+        const status = row?.status === 'suspended' || row?.status === 'banned' ? 'suspended' : row?.status === 'under_review' ? 'under_review' : 'active';
+        return { status, reason: row?.reason ?? undefined };
       },
       async pause(paused) {
         const { error } = await sb.functions.invoke('account', { body: { action: paused ? 'pause' : 'unpause' } });
@@ -301,13 +332,13 @@ export function createSupabaseApi(sb: SupabaseClient = createSupabaseClient()): 
     matches: {
       async list() {
         const me = await uid();
-        const { data, error } = await sb.from('matches').select('*').is('unmatched_at', null).order('created_at', { ascending: false });
+        const { data, error } = await sb.from('matches').select('*').order('created_at', { ascending: false });
         if (error) mapError(error);
         return Promise.all((data ?? []).map(async (m): Promise<Match> => {
           const other = m.user_a === me ? m.user_b : m.user_a;
           const { data: last } = await sb.from('messages').select('*').eq('match_id', m.id).order('created_at', { ascending: false }).limit(1).maybeSingle();
           const { count } = await sb.from('messages').select('id', { count: 'exact', head: true }).eq('match_id', m.id).neq('sender_id', me).is('read_at', null);
-          return { id: m.id, profile: await profileById(other), matchedAt: m.created_at, lastMessage: last ? toMessage(last) : undefined, unread: count ?? 0, closed: (m.closed_by as string[]).includes(me) };
+          return { id: m.id, profile: await profileById(other), matchedAt: m.created_at, lastMessage: last ? toMessage(last) : undefined, unread: count ?? 0, closed: (m.closed_by as string[]).includes(me), endedAt: m.unmatched_at ?? undefined };
         }));
       },
       async get(id) {
@@ -404,7 +435,13 @@ export function createSupabaseApi(sb: SupabaseClient = createSupabaseClient()): 
       },
       async appeal(text) {
         const me = await uid();
-        await sb.from('appeals').insert({ user_id: me, body: text });
+        const { data, error } = await sb.from('appeals').insert({ user_id: me, body: text }).select('*').single();
+        if (error) mapError(error);
+        return { id: data.id, body: data.body, createdAt: data.created_at, status: data.status };
+      },
+      async appeals() {
+        const { data } = await sb.from('appeals').select('*').order('created_at', { ascending: false });
+        return (data ?? []).map((a) => ({ id: a.id, body: a.body, createdAt: a.created_at, status: a.status, outcomeNote: a.outcome_note ?? undefined }));
       },
     },
     privacy: {
@@ -425,6 +462,52 @@ export function createSupabaseApi(sb: SupabaseClient = createSupabaseClient()): 
       async requestAccess(profileId) {
         const me = await uid();
         await sb.from('photo_access').insert({ owner_id: profileId, viewer_id: me });
+      },
+      async grant(profileId) {
+        const me = await uid();
+        const { error } = await sb.from('photo_access').upsert({ owner_id: me, viewer_id: profileId, status: 'shared' }, { onConflict: 'owner_id,viewer_id' });
+        if (error) mapError(error);
+      },
+    },
+    support: {
+      async create({ topic, body, attachmentUri }) {
+        const me = await uid();
+        let attachment_path: string | null = null;
+        if (attachmentUri) {
+          attachment_path = `${me}/support/${Date.now()}.jpg`;
+          await uploadFile('photos', attachment_path, attachmentUri, 'image/jpeg');
+        }
+        const { data, error } = await sb.from('support_tickets').insert({ user_id: me, topic, attachment_path }).select('id').single();
+        if (error) mapError(error);
+        await sb.from('support_messages').insert({ ticket_id: data.id, sender: 'user', body });
+        return api.support.get(data.id);
+      },
+      async list() {
+        const { data } = await sb.from('support_tickets').select('id').order('created_at', { ascending: false });
+        return Promise.all((data ?? []).map((t) => api.support.get(t.id)));
+      },
+      async get(id): Promise<SupportTicket> {
+        const { data: t, error } = await sb.from('support_tickets').select('*').eq('id', id).single();
+        if (error) mapError(error);
+        const { data: msgs } = await sb.from('support_messages').select('*').eq('ticket_id', id).order('created_at');
+        return {
+          id: t.id, reference: t.reference, topic: t.topic, status: t.status, createdAt: t.created_at,
+          messages: (msgs ?? []).map((m) => ({ id: m.id, from: m.sender === 'user' ? ('me' as const) : ('support' as const), body: m.body, createdAt: m.created_at })),
+        };
+      },
+      async reply(id, body) {
+        const { error } = await sb.from('support_messages').insert({ ticket_id: id, sender: 'user', body });
+        if (error) mapError(error);
+        return api.support.get(id);
+      },
+    },
+    inbox: {
+      async list() {
+        const { data } = await sb.from('inbox_items').select('*').order('created_at', { ascending: false }).limit(100);
+        return (data ?? []).map((i) => ({ id: i.id, kind: i.kind, title: i.title, body: i.body, createdAt: i.created_at, read: i.read, href: i.href ?? undefined }));
+      },
+      async markAllRead() {
+        await sb.from('inbox_items').update({ read: true }).eq('read', false);
       },
     },
   };

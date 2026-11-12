@@ -184,4 +184,54 @@ select pg_temp.expect((select count(*) from profiles where id = :bob) = 0, 'susp
 select pg_temp.expect(not exists (select 1 from daily_introductions(8) where id = :bob), 'suspended users are excluded from introductions');
 reset role;
 
+-- ---- Package gaps: preferences, support, inbox, appeal outcome ----
+select pg_temp.as_user(:carol);
+insert into preferences (user_id, genders, age_min, age_max) values (:carol, '{man}', 25, 40);
+insert into support_tickets (user_id, topic) values (:carol, 'billing');
+insert into support_messages (ticket_id, sender, body) select id, 'user', 'I was charged twice' from support_tickets;
+reset role;
+update profiles set gender = 'man' where id = :alice;
+select pg_temp.as_user(:alice);
+select pg_temp.expect((select count(*) from preferences) = 0, 'preferences are private to their owner');
+select pg_temp.expect((select count(*) from support_tickets) = 0, 'support tickets are private');
+select pg_temp.expect((select count(*) from support_messages) = 0, 'support messages are private');
+do $$ begin
+  begin
+    insert into support_messages (ticket_id, sender, body) select id, 'support', 'fake reply' from public.support_tickets;
+    insert into public.inbox_items (user_id, kind, title, body) values (auth.uid(), 'x', 'y', 'z');
+    raise exception 'FAIL: user wrote an inbox item';
+  exception when insufficient_privilege then raise notice 'ok - users cannot write inbox items or fake support replies';
+  end;
+end $$;
+reset role;
+select pg_temp.as_user(:carol);
+select pg_temp.expect((select count(*) from support_messages) = 1, 'owner reads their own support conversation');
+do $$ begin
+  begin
+    insert into public.support_messages (ticket_id, sender, body) select id, 'support', 'spoof' from public.support_tickets;
+    raise exception 'FAIL: user posted as support';
+  exception when insufficient_privilege then raise notice 'ok - users cannot post as support';
+  end;
+end $$;
+select pg_temp.expect(exists (select 1 from daily_introductions(8) where id = :alice), 'preferences: Carol (wants men 25-40) is introduced to Alice (man, 31)');
+reset role;
+update preferences set genders = '{woman}' where user_id = :carol;
+select pg_temp.as_user(:carol);
+select pg_temp.expect(not exists (select 1 from daily_introductions(8) where id = :alice), 'preferences: changing "Who you meet" removes non-matching people');
+reset role;
+
+-- reporter gets an outcome in their inbox (Alice reported Bob earlier and Bob was suspended)
+select pg_temp.as_user(:alice);
+select pg_temp.expect(exists (select 1 from inbox_items where kind = 'report_outcome'), 'reporter receives a report outcome in their inbox');
+select pg_temp.expect(not exists (select 1 from inbox_items where body ilike '%suspend%'), 'report outcome does not reveal the action taken');
+reset role;
+select pg_temp.as_user(:bob);
+insert into appeals (user_id, body) values (:bob, 'I think this was a mistake.');
+select pg_temp.expect((select status from my_account_review()) = 'suspended', 'suspended user can read their own review status');
+reset role;
+update appeals set status = 'overturned' where user_id = :bob;
+select pg_temp.as_user(:bob);
+select pg_temp.expect(exists (select 1 from inbox_items where kind = 'appeal_outcome'), 'appeal outcome is delivered to the appellant');
+reset role;
+
 \echo 'ALL RLS TESTS PASSED'
