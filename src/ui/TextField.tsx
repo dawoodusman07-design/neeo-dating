@@ -61,7 +61,7 @@ export const TextField = forwardRef<React.ComponentRef<typeof TextInput>, Props>
             setFocused(false);
             onBlur?.(e);
           }}
-          style={[{ flex: 1, color: t.c.text, fontFamily: t.font.regular, fontSize: t.type.lg, paddingVertical: t.space[3], textAlign: 'auto' }, style]}
+          style={[{ flex: 1, minWidth: 0, color: t.c.text, fontFamily: t.font.regular, fontSize: t.type.lg, paddingVertical: t.space[3], textAlign: 'auto' }, style]}
         />
         {trailing}
       </View>

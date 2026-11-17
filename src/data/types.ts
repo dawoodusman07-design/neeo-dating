@@ -136,8 +136,23 @@ export type CheckIn = {
   startsAt: string;
   checkInAt: string;
   contact: TrustedContact;
-  status: 'scheduled' | 'checked_in' | 'escalated' | 'cancelled';
+  status: 'scheduled' | 'checked_in' | 'help_requested' | 'escalated' | 'cancelled';
 };
+
+/** An invitation sent to someone outside Neeo (no account needed): a chaperone or a friend writing a Friend's Take. */
+export type Invite = {
+  id: string;
+  kind: 'chaperone' | 'friends_take';
+  name: string;
+  phone?: string;
+  status: 'sent' | 'accepted' | 'revoked';
+  /** Link to share with them (opens neeo.app/invite). */
+  url: string;
+  createdAt: string;
+};
+
+/** A Friend's Take on my own profile, including ones I haven't approved yet. */
+export type MyFriendsTake = { id: string; author: string; text: string; approved: boolean };
 
 export type ModerationAction = 'warn' | 'suspend' | 'ban' | 'dismiss';
 
@@ -164,7 +179,7 @@ export type SupportTicket = {
 
 export type InboxItem = {
   id: string;
-  kind: 'report_outcome' | 'photo_request_declined' | 'photo_request_shared' | 'appeal_outcome' | 'support_reply' | 'new_match' | 'new_like';
+  kind: 'report_outcome' | 'photo_request_declined' | 'photo_request_shared' | 'appeal_outcome' | 'support_reply' | 'new_match' | 'new_like' | 'check_in' | 'chaperone_accepted' | 'friends_take';
   title: string;
   body: string;
   createdAt: string;

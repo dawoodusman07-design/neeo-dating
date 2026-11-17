@@ -39,6 +39,7 @@ export default function Agreement() {
       <Pressable
         accessibilityRole="checkbox"
         accessibilityState={{ checked: agreementAccepted }}
+        aria-checked={agreementAccepted}
         accessibilityLabel={tr('onboarding.agreementCheckbox')}
         onPress={() => patch({ agreementAccepted: !agreementAccepted })}
         style={{ flexDirection: 'row', alignItems: 'center', gap: t.space[3], minHeight: 44 }}

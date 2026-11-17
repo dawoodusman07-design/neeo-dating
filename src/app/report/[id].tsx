@@ -127,6 +127,7 @@ export default function Report() {
                 key={m.id}
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: on }}
+                aria-checked={on}
                 accessibilityLabel={`${m.body}, ${formatTime(m.createdAt)}`}
                 onPress={() => setIncluded((s) => {
                   const n = new Set(s);

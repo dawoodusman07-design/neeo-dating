@@ -318,4 +318,68 @@ do $$ declare mid uuid; begin
   reset role;
 end $$;
 
+-- ---- QA pass: invites, Friend's Take, check-in help ----
+select pg_temp.as_user(:carol);
+insert into invites (user_id, kind, name, phone) values (:carol, 'chaperone', 'Auntie Sara', '+14165550100');
+insert into invites (user_id, kind, name) values (:carol, 'friends_take', 'Hina');
+select pg_temp.expect((select count(*) from invites) = 2, 'owner reads their own invites');
+select pg_temp.expect((select count(*) from invites where status = 'sent') = 2, 'new invites start as sent');
+update invites set status = 'revoked' where kind = 'chaperone';
+select pg_temp.expect((select count(*) from invites where status = 'revoked') = 1, 'owner can revoke an invite');
+reset role;
+select pg_temp.as_user(:alice);
+select pg_temp.expect((select count(*) from invites) = 0, 'invites (and the chaperone''s phone) are private to the owner');
+reset role;
+-- the friend's answer arrives through the Edge Function (service role)
+insert into friends_takes (user_id, author_name, body, invite_id)
+  select user_id, name, 'Kind and funny', id from invites where kind = 'friends_take';
+do $$ begin
+  perform set_config('request.jwt.claim.sub', 'cccccccc-0000-0000-0000-000000000003', false);
+  set role authenticated;
+  begin
+    update public.invites set status = 'accepted' where kind = 'friends_take';
+    raise exception 'FAIL: owner accepted their own invite';
+  exception when insufficient_privilege or check_violation then raise notice 'ok - only the invited person can accept an invite';
+  end;
+  begin
+    insert into public.invites (user_id, kind, name, status) values (auth.uid(), 'chaperone', 'Fake', 'accepted');
+    raise exception 'FAIL: created an already-accepted invite';
+  exception when insufficient_privilege or check_violation then raise notice 'ok - cannot create an accepted invite';
+  end;
+  begin
+    insert into public.friends_takes (user_id, author_name, body, approved) values (auth.uid(), 'Me pretending', 'Best person ever', true);
+    raise exception 'FAIL: wrote my own Friend''s Take';
+  exception when insufficient_privilege then raise notice 'ok - a Friend''s Take cannot be written by the profile owner';
+  end;
+  begin
+    update public.friends_takes set body = 'edited' ;
+    raise exception 'FAIL: edited a friend''s words';
+  exception when insufficient_privilege then raise notice 'ok - the owner cannot edit what a friend wrote';
+  end;
+  reset role;
+end $$;
+select pg_temp.as_user(:carol);
+update friends_takes set approved = true;
+select pg_temp.expect((select count(*) from friends_takes where approved) = 1, 'owner approves a Friend''s Take');
+reset role;
+select pg_temp.as_user(:alice);
+select pg_temp.expect((select count(*) from friends_takes where user_id = :carol) = 1, 'an approved Friend''s Take is visible to people who can see the profile');
+reset role;
+select pg_temp.as_user(:carol);
+insert into check_ins (user_id, place, starts_at, check_in_at, contact_name, contact_phone)
+  values (:carol, 'Cafe', now(), now() + interval '2 hours', 'Sara', '+14165550100');
+update check_ins set status = 'help_requested' where place = 'Cafe';
+select pg_temp.expect((select status::text from check_ins where place = 'Cafe') = 'help_requested', 'owner can ask for help on their check-in');
+reset role;
+do $$ begin
+  perform set_config('request.jwt.claim.sub', 'cccccccc-0000-0000-0000-000000000003', false);
+  set role authenticated;
+  begin
+    update public.check_ins set status = 'escalated' where place = 'Cafe';
+    raise exception 'FAIL: user marked their check-in escalated';
+  exception when insufficient_privilege then raise notice 'ok - only the escalation job marks a check-in escalated';
+  end;
+  reset role;
+end $$;
+
 \echo 'ALL RLS TESTS PASSED'

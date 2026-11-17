@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/theme';
-import { EmptyState, ProfilePhoto, Segmented, Text } from '@/ui';
+import { contentName, EmptyState, ProfilePhoto, Segmented, Text } from '@/ui';
 import type { Like } from '@/data';
 import { useLikesReceived, useLikesSent } from '@/data/hooks';
 
@@ -52,7 +52,7 @@ export default function Likes() {
           <Pressable
             style={{ flex: 1 / 2, gap: t.space[1] }}
             accessibilityRole="button"
-            accessibilityLabel={`${item.profile.firstName}, ${item.profile.age}. ${subtitle(item)}${item.comment && tab === 'received' ? `: ${item.comment}` : ''}`}
+            {...contentName(`${item.profile.firstName}, ${item.profile.age}. ${item.comment && tab === 'received' ? `“${item.comment}”. ` : ''}${subtitle(item)}`)}
             testID={`like-${item.profile.firstName}`}
             onPress={() => router.push({ pathname: '/profile/[id]', params: { id: item.profile.id, from: tab === 'received' ? 'likes' : 'sent' } })}
           >

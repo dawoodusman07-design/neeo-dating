@@ -24,6 +24,7 @@ const BASE = `http://localhost:${PORT}`;
     else await d.accept();
   });
   const tid = (id) => page.locator(`[data-testid="${id}"]`).first();
+  const vtid = (id) => page.locator(`[data-testid="${id}"]`).filter({ visible: true }).first();
   const see = (text) => page.getByText(text, { exact: false }).filter({ visible: true }).first().waitFor({ state: 'visible', timeout: 8000 });
   const button = (name) => page.getByRole('button', { name }).filter({ visible: true }).first().click();
   const tab = (name) => page.getByRole('tab', { name: new RegExp('^' + name) }).click();
@@ -211,9 +212,60 @@ const BASE = `http://localhost:${PORT}`;
     assert.equal(await tid('chat-row-Maya').count(), 0, 'blocked match removed from chats');
     step('blocked user gone from chats');
 
+    // ---- date check-in → "Are you okay?" → I'm okay (QA pass) ----
+    await vtid('chat-row-Ayesha').click();
+    await vtid('chat-safety').click();
+    await button(/date check-in/i);
+    await page.getByRole('textbox', { name: 'Place', exact: true }).fill('Café on Queen St W');
+    await page.getByRole('textbox', { name: 'Their first name' }).fill('Sara');
+    await page.getByRole('textbox', { name: 'Their phone number' }).fill('+14165550100');
+    await vtid('checkin-schedule').click();
+    await backToTabs();
+    await tab('Chats');
+    await vtid('checkin-now').click();
+    await see('Are you okay?');
+    await vtid('checkin-ok').click();
+    await see('Glad you’re okay');
+    step('date check-in → prompt → "I’m okay"');
+    await button(/^Done/);
+    await page.waitForTimeout(500);
+
+    // ---- Friend's Take: invite → received → shown (QA pass) ----
+    await tab('You');
+    await vtid('friends-take-row').click();
+    await vtid('take-friend-name').fill('Hina');
+    await vtid('take-invite').click();
+    await vtid('take-show').waitFor({ timeout: 10000 });
+    await vtid('take-show').click();
+    await see('Shown on your profile');
+    step('Friend’s Take: invite → received → shown on profile');
+    await backToTabs();
+
+    // ---- chaperone: invite → accepted (QA pass) ----
+    await tab('You');
+    await button(/^Safety/);
+    await vtid('chaperone-row').click();
+    await vtid('chaperone-name').fill('Sara');
+    await vtid('chaperone-phone').fill('+14165550100');
+    await vtid('chaperone-invite').click();
+    await see('Invitation sent');
+    await vtid('chaperone-accepted').waitFor({ timeout: 10000 });
+    step('chaperone: invite → accepted');
+    await backToTabs();
+
+    // ---- You → Help and what's new (QA pass) ----
+    await tab('You');
+    await vtid('help-row').click();
+    await vtid('whats-new').click();
+    await see('What’s new');
+    step('You → Help and what’s new');
+    await backToTabs();
+    await tab('Chats');
+    await page.waitForTimeout(500);
+
     // ---- end a connection (29) → listed under Ended connections ----
-    await tid('chat-row-Ayesha').click();
-    await tid('chat-safety').click();
+    await vtid('chat-row-Ayesha').click();
+    await vtid('chat-safety').click();
     await button('End connection');
     await tid('unmatch-confirm').click();
     await see('Connection ended');

@@ -12,6 +12,7 @@ export const links = {
   childSafety: `${WEB}/child-safety`,
   deleteAccount: `${WEB}/delete-account`,
   help: `${WEB}/help`,
+  invite: (token: string) => `${WEB}/invite?t=${token}`,
 };
 
 export const openLink = (url: string) => WebBrowser.openBrowserAsync(url).catch(() => Linking.openURL(url));

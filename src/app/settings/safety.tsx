@@ -21,7 +21,8 @@ export default function SafetyCentre() {
         <ListRow icon="blockContacts" title={t('you.blockContacts')} onPress={go('/settings/block-contacts')} />
         <ListRow icon="photoPrivacy" title={t('privacy.title')} onPress={go('/settings/photo-privacy')} />
         <ListRow icon="verified" title={t('you.getVerified')} onPress={go('/verify')} />
-        <ListRow icon="dateIdea" title={t('chat.dateCheckIn')} subtitle="Open a chat, then tap the shield icon" />
+        <ListRow icon="dateIdea" title={t('chat.dateCheckIn')} subtitle={t('settings.checkInHint')} />
+        <ListRow icon="chaperone" title={t('settings.chaperoneRow')} subtitle={t('settings.chaperoneSub')} onPress={go('/settings/chaperone')} testID="chaperone-row" />
       </ListGroup>
       <ListGroup>
         <ListRow icon="safety" title={t('info.safety.title')} onPress={go('/info/safety')} />

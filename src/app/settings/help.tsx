@@ -16,6 +16,9 @@ export default function Help() {
         <ListRow icon="help" title={t('settings.contact')} subtitle={SUPPORT_EMAIL} onPress={() => router.push('/support')} />
         <ListRow icon="chats" title={t('support.inboxTitle')} onPress={() => router.push('/support/inbox')} />
       </ListGroup>
+      <ListGroup>
+        <ListRow icon="tip" title={t('info.whats-new.title')} onPress={info('whats-new')} testID="whats-new" />
+      </ListGroup>
       <ListGroup title={t('you.help')}>
         <ListRow icon="info" title={t('info.about.title')} onPress={info('about')} />
         <ListRow icon="discover" title={t('info.matching.title')} onPress={info('matching')} />
@@ -23,7 +26,7 @@ export default function Help() {
         <ListRow icon="plus" title={t('info.plus-faq.title')} onPress={info('plus-faq')} />
         <ListRow icon="safety" title={t('info.safety.title')} onPress={info('safety')} />
       </ListGroup>
-      <ListGroup title="Policies">
+      <ListGroup title={t('settings.policies')}>
         <ListRow icon="info" title={t('info.community.title')} onPress={info('community')} />
         <ListRow icon="photoPrivacy" title={t('info.privacy-summary.title')} onPress={info('privacy-summary')} />
         <ListRow icon="billing" title={t('info.subscription-terms.title')} onPress={info('subscription-terms')} />

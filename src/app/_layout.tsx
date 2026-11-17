@@ -90,6 +90,7 @@ function RootStack({ ready }: { ready: boolean }) {
           <Stack.Screen name="photo-request/[id]" options={{ presentation: 'modal' }} />
           <Stack.Screen name="share-photos/[matchId]" options={{ presentation: 'modal' }} />
           <Stack.Screen name="check-in/[matchId]" />
+          <Stack.Screen name="check-in-prompt/[id]" />
           <Stack.Screen name="settings" />
           <Stack.Screen name="support" />
           <Stack.Screen name="notifications" />

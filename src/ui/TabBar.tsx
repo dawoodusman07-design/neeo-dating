@@ -7,6 +7,7 @@ import { useTheme } from '@/theme';
 import { Icon } from './Icon';
 import type { IconName } from './icons';
 import { Text } from './Text';
+import { contentName, SrOnly } from './a11y';
 
 const ICONS: Record<string, IconName> = { discover: 'discover', likes: 'likes', chats: 'chats', you: 'you' };
 
@@ -33,7 +34,7 @@ export function TabBar({ state, descriptors, navigateToTab }: BottomTabBarProps)
             key={route.key}
             accessibilityRole="tab"
             accessibilityState={{ selected: focused }}
-            accessibilityLabel={badge ? `${label}, ${tr('a11y.unread', { count: Number(badge) })}` : label}
+            {...contentName(badge ? `${label}, ${tr('a11y.unread', { count: Number(badge) })}` : label)}
             aria-selected={focused}
             onPress={onPress}
             style={{ flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: 52, gap: 2 }}
@@ -51,6 +52,7 @@ export function TabBar({ state, descriptors, navigateToTab }: BottomTabBarProps)
             <Text variant="small" color={focused ? 'action' : 'textMuted'} style={{ fontFamily: focused ? t.font.semibold : t.font.medium }}>
               {label}
             </Text>
+            {badge ? <SrOnly>{`, ${tr('a11y.unread', { count: Number(badge) })}`}</SrOnly> : null}
           </Pressable>
         );
       })}

@@ -2,7 +2,7 @@
  * One outline icon set (lucide), one icon per meaning. Never use emoji.
  */
 import {
-  ArrowDown, BadgeCheck, Ban, Bell, Bookmark, CalendarHeart, Camera, Check, ChevronDown, ChevronLeft, ChevronRight,
+  ArrowDown, BadgeCheck, Ban, Bell, Bookmark, CalendarHeart, Camera, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp,
   CircleAlert, CircleHelp, CirclePause, Clock, CloudOff, Compass, Contact, CreditCard, Download, Ellipsis, Eye, EyeOff,
   Flag, Globe, GripVertical, Heart, ImagePlus, Info, Lightbulb, Lock, LogOut, MapPin, MessageCircle, Mic, Minus, Moon,
   Pause, Phone, Play, Plus, RefreshCw, ScanFace, Send, ShieldCheck, SlidersHorizontal, Sparkles, Trash2, Undo2, User,
@@ -32,6 +32,8 @@ export const Icons = {
   back: ChevronLeft,
   chevron: ChevronRight,
   expand: ChevronDown,
+  moveUp: ChevronUp,
+  moveDown: ChevronDown,
   seeMore: ArrowDown,
   more: Ellipsis,
   camera: Camera,

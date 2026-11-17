@@ -8,12 +8,17 @@ Deno.serve(async () => {
   const db = adminClient();
   const now = new Date();
   const overdue = new Date(now.getTime() - 15 * 60_000).toISOString();
-  const { data } = await db.from('check_ins').select('*').eq('status', 'scheduled').lte('check_in_at', overdue);
+  // Overdue with no answer, or the user tapped "I need help" (alert immediately).
+  const { data: overdueRows } = await db.from('check_ins').select('*').eq('status', 'scheduled').lte('check_in_at', overdue);
+  const { data: helpRows } = await db.from('check_ins').select('*').eq('status', 'help_requested');
+  const data = [...(helpRows ?? []), ...(overdueRows ?? [])];
   for (const c of data ?? []) {
-    const body = `Neeo safety check: your contact had a date at ${c.place} starting ${new Date(c.starts_at).toLocaleString()} and hasn't checked in. Please contact them.`;
+    const body = c.status === 'help_requested'
+      ? `Neeo safety alert: your contact asked for help during a date at ${c.place} (started ${new Date(c.starts_at).toLocaleString()}). Call them now. If you can't reach them, call local emergency services.`
+      : `Neeo safety check: your contact had a date at ${c.place} starting ${new Date(c.starts_at).toLocaleString()} and hasn't checked in. Call them to make sure they're okay.`;
     const sms = Deno.env.get('SMS_WEBHOOK_URL');
     if (sms) await fetch(sms, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ to: c.contact_phone, body }) });
     await db.from('check_ins').update({ status: 'escalated' }).eq('id', c.id);
   }
-  return json({ escalated: data?.length ?? 0 });
+  return json({ escalated: data.length });
 });

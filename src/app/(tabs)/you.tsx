@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { useTheme } from '@/theme';
-import { Avatar, Button, Card, Chip, Icon, ListGroup, ListRow, ProgressBar, Text, VerifiedBadge, type IconName } from '@/ui';
+import { Avatar, Button, Card, Chip, contentName, Icon, ListGroup, ListRow, ProgressBar, Text, VerifiedBadge, type IconName } from '@/ui';
 import { type MyProfile } from '@/data';
 import { runtimeConfig } from '@/config';
 import { useMe } from '@/data/hooks';
@@ -38,7 +38,7 @@ export default function You() {
   const nb = m ? nextBestAction(m) : null;
   const go = (path: string) => () => router.push(path as never);
   const tile = (icon: IconName, title: string, sub: string, path: string) => (
-    <Pressable onPress={go(path)} accessibilityRole="button" accessibilityLabel={`${title}. ${sub}`} style={({ pressed }) => ({ flex: 1, minHeight: 104, padding: t.space[4], gap: t.space[1], borderRadius: t.radius.lg, borderWidth: 1, borderColor: t.c.border, backgroundColor: pressed ? t.c.tint : t.c.surface })}>
+    <Pressable onPress={go(path)} accessibilityRole="button" {...contentName(`${title}. ${sub}`)} style={({ pressed }) => ({ flex: 1, minHeight: 104, padding: t.space[4], gap: t.space[1], borderRadius: t.radius.lg, borderWidth: 1, borderColor: t.c.border, backgroundColor: pressed ? t.c.tint : t.c.surface })}>
       <Icon name={icon} size={24} color={t.c.brandDeep} />
       <Text variant="bodyStrong">{title}</Text>
       <Text variant="caption" color="textMuted">{sub}</Text>
@@ -90,7 +90,9 @@ export default function You() {
         <ListRow icon="preferences" title={tr('you.preferences')} subtitle={tr('you.preferencesSub')} onPress={go('/settings/preferences')} />
         <ListRow icon="notifications" title={tr('you.notifications')} subtitle={quietHours.enabled ? tr('you.notificationsSub', { start: quietHours.start, end: quietHours.end }) : tr('you.notificationsSubOff')} onPress={go('/settings/notifications')} />
         <ListRow icon="save" title={tr('you.saved')} subtitle={tr('you.savedSub')} onPress={go('/saved')} />
+        <ListRow icon="chats" title={tr('you.friendsTakeRow')} subtitle={tr('you.friendsTakeSub')} onPress={go('/settings/friends-take')} testID="friends-take-row" />
         <ListRow icon="more" title={tr('you.settings')} subtitle={tr('you.settingsSub')} onPress={go('/settings/account')} />
+        <ListRow icon="help" title={tr('you.helpRow')} subtitle={tr('you.helpRowSub')} onPress={go('/settings/help')} testID="help-row" />
         <ListRow icon="plus" title={tr('you.plus')} subtitle={tr('you.plusSub')} value={membership.data && isPlusActive(membership.data.status) ? tr('common.plusBadge') : undefined} onPress={go(membership.data && membership.data.status !== 'free' ? '/membership' : '/plus')} />
       </ListGroup>
       {!m?.verified ? <Button title={tr('you.getVerified')} icon="verified" variant="text" onPress={go('/verify')} /> : null}

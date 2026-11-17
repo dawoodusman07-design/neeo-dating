@@ -1,6 +1,8 @@
 import type {
   BlockedAccount,
   CheckIn,
+  Invite,
+  MyFriendsTake,
   DateProposal,
   Introductions,
   Like,
@@ -105,6 +107,10 @@ export interface NeeoApi {
     report(profileId: string, reason: ReportReason, details?: string, messageId?: string): Promise<{ reportId: string }>;
     createCheckIn(input: { matchId: string; place: string; startsAt: string; checkInAt: string; contact: TrustedContact }): Promise<CheckIn>;
     confirmCheckIn(id: string): Promise<void>;
+    /** "I need help": alert the trusted contact now (the escalation job sends the SMS). */
+    requestHelp(id: string): Promise<void>;
+    /** The check-in that is scheduled and not yet answered, if any. */
+    activeCheckIn(): Promise<CheckIn | null>;
     appeal(text: string): Promise<Appeal>;
     appeals(): Promise<Appeal[]>;
   };
@@ -138,5 +144,17 @@ export interface NeeoApi {
   inbox: {
     list(): Promise<InboxItem[]>;
     markAllRead(): Promise<void>;
+  };
+  /** Invitations to people outside Neeo (chaperone, Friend's Take). Owner-only. */
+  invites: {
+    list(kind: Invite['kind']): Promise<Invite[]>;
+    create(kind: Invite['kind'], input: { name: string; phone?: string }): Promise<Invite>;
+    revoke(id: string): Promise<void>;
+  };
+  friendsTakes: {
+    /** All takes written about me, approved or not (only I can see unapproved ones). */
+    mine(): Promise<MyFriendsTake[]>;
+    setApproved(id: string, approved: boolean): Promise<void>;
+    remove(id: string): Promise<void>;
   };
 }

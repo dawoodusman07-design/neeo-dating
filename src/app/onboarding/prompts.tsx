@@ -3,13 +3,14 @@ import { View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme';
-import { Button, Card, IconButton, ListGroup, ListRow, Sheet, Text, TextField } from '@/ui';
+import { Button, Card, ListGroup, ListRow, Sheet, Text, TextField, toast } from '@/ui';
 import { promptAnswerSchema } from '@/data';
 import { formatDuration } from '@/lib/time';
 import { useOnboarding, type DraftPrompt } from '@/stores/onboarding';
 import { OnboardingStep } from '@/features/onboarding/OnboardingStep';
 import { nextStep, PROMPT_QUESTIONS } from '@/features/onboarding/steps';
 import { VoiceRecorder } from '@/features/voice/VoiceRecorder';
+import { VoicePlayer } from '@/features/voice/VoicePlayer';
 
 export default function Prompts() {
   const t = useTheme();
@@ -57,11 +58,28 @@ export default function Prompts() {
             hint={tr('common.charCount', { count: p.answer.length, max: 200 })}
           />
           {p.voiceUri ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.space[2] }}>
-              <Text variant="caption" style={{ flex: 1 }}>
+            // Record -> listen back -> record again or delete, before it goes on the profile.
+            <View style={{ gap: t.space[2] }} testID={`voice-answer-${i}`}>
+              <Text variant="caption" accessibilityLiveRegion="polite">
                 {tr('onboarding.promptVoiceRecorded', { duration: formatDuration(p.voiceDurationSec ?? 0) })}
               </Text>
-              <IconButton icon="delete" label={tr('onboarding.promptVoiceRemove')} onPress={() => update(i, { voiceUri: undefined, voiceDurationSec: undefined })} />
+              <VoicePlayer clip={{ uri: p.voiceUri, durationSec: p.voiceDurationSec ?? 0, waveform: [] }} label={tr('voice.play')} />
+              <View style={{ flexDirection: 'row', gap: t.space[2], flexWrap: 'wrap' }}>
+                <View style={{ flex: 1, minWidth: 140 }}>
+                  <VoiceRecorder label={tr('voice.reRecord')} onRecorded={(uri, d) => update(i, { voiceUri: uri, voiceDurationSec: d })} />
+                </View>
+                <Button
+                  title={tr('voice.delete')}
+                  variant="text"
+                  icon="delete"
+                  fullWidth={false}
+                  onPress={() => {
+                    update(i, { voiceUri: undefined, voiceDurationSec: undefined });
+                    toast(tr('voice.deleted'));
+                  }}
+                  testID={`voice-delete-${i}`}
+                />
+              </View>
             </View>
           ) : (
             <VoiceRecorder onRecorded={(uri, d) => update(i, { voiceUri: uri, voiceDurationSec: d })} />

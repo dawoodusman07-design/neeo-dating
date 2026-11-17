@@ -3,9 +3,9 @@ import { Pressable, ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTheme } from '@/theme';
-import { Avatar, Button, Card, EmptyState, Icon, ListGroup, ListRow, Text, VerifiedBadge } from '@/ui';
+import { Avatar, Button, Card, contentName, EmptyState, Icon, ListGroup, ListRow, Text, VerifiedBadge } from '@/ui';
 import { api, type Match } from '@/data';
 import { qk, useMatches } from '@/data/hooks';
 import { chatCapState } from '@/lib/chatCap';
@@ -22,6 +22,7 @@ export default function Chats() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const qc = useQueryClient();
+  const activeCheckIn = useQuery({ queryKey: ['checkIn', 'active'], queryFn: () => api.safety.activeCheckIn() });
   const matches = useMatches();
   const myId = useMyId();
   const all = matches.data ?? [];
@@ -55,14 +56,26 @@ export default function Chats() {
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: t.c.bg }} contentContainerStyle={{ paddingTop: insets.top, paddingBottom: t.space[8], gap: t.space[4] }}>
-      <Text variant="title" style={{ paddingHorizontal: t.space[4], paddingTop: t.space[4] }}>{tr('chats.title')}</Text>
+      <Text variant="title" style={{ paddingHorizontal: t.space[4], paddingTop: t.space[4] }} accessibilityRole="header">{tr('chats.title')}</Text>
+      {activeCheckIn.data ? (
+        <View style={{ paddingHorizontal: t.space[4] }}>
+          <Card tone="tint" testID="active-checkin">
+            <View style={{ flexDirection: 'row', gap: t.space[2], alignItems: 'center' }}>
+              <Icon name="safety" color={t.c.accent} />
+              <Text variant="bodyStrong" style={{ flex: 1 }}>{tr('checkIn.activeTitle')}</Text>
+            </View>
+            <Text color="textMuted">{tr('checkIn.activeBody', { place: activeCheckIn.data.place, time: formatTime(activeCheckIn.data.checkInAt) })}</Text>
+            <Button title={tr('checkIn.checkInNow')} variant="secondary" onPress={() => router.push({ pathname: '/check-in-prompt/[id]', params: { id: activeCheckIn.data!.id } })} testID="checkin-now" />
+          </Card>
+        </View>
+      ) : null}
 
       {fresh.length ? (
         <View style={{ gap: t.space[2] }}>
           <Text variant="caption" color="textMuted" accessibilityRole="header" style={{ paddingHorizontal: t.space[4] }}>{tr('chats.newConnections')}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: t.space[4], paddingHorizontal: t.space[4] }}>
             {fresh.map((m) => (
-              <Pressable key={m.id} onPress={() => open(m)} accessibilityRole="button" accessibilityLabel={`${m.profile.firstName}, ${tr('chats.newMatch')}`} style={{ alignItems: 'center', gap: t.space[1], width: 72 }} testID={`new-connection-${m.profile.firstName}`}>
+              <Pressable key={m.id} onPress={() => open(m)} accessibilityRole="button" {...contentName(`${m.profile.firstName}, ${tr('chats.newMatch')}`)} style={{ alignItems: 'center', gap: t.space[1], width: 72 }} testID={`new-connection-${m.profile.firstName}`}>
                 <Avatar uri={m.profile.photos[0]?.uri} name={m.profile.firstName} size={64} />
                 <Text variant="caption" numberOfLines={1}>{m.profile.firstName}</Text>
               </Pressable>
@@ -90,7 +103,7 @@ export default function Chats() {
                 onPress={() => open(m)}
                 onLongPress={() => close(m)}
                 accessibilityRole="button"
-                accessibilityLabel={[m.profile.firstName, m.profile.verified ? tr('common.verified') : '', preview(m), m.unread ? tr('a11y.unread', { count: m.unread }) : ''].filter(Boolean).join(', ')}
+                {...contentName([m.profile.firstName, m.profile.verified ? tr('common.verified') : '', preview(m), m.unread ? tr('a11y.unread', { count: m.unread }) : ''].filter(Boolean).join(', '))}
                 accessibilityActions={[{ name: 'close', label: tr('chats.closeChat') }]}
                 onAccessibilityAction={() => close(m)}
                 style={({ pressed }) => ({ flexDirection: 'row', gap: t.space[3], alignItems: 'center', paddingHorizontal: t.space[4], paddingVertical: t.space[3], backgroundColor: pressed ? t.c.tint : 'transparent' })}

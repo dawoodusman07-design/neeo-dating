@@ -58,22 +58,23 @@ export default function Photos() {
       {photos.map((p, i) => {
         const s = status(p);
         return (
-          <Card key={p.id} style={{ flexDirection: 'row', alignItems: 'center' }}>
+          // Wraps at narrow widths / 200% zoom: controls drop under the text instead of crushing it (WCAG 1.4.10).
+          <Card key={p.id} style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' }}>
             <View style={{ width: 72 }}>
-              <ProfilePhoto uri={p.uri} label={`Photo ${i + 1}`} radius={t.radius.sm} />
+              <ProfilePhoto uri={p.uri} label={tr('a11y.yourPhoto', { n: i + 1, total: photos.length })} radius={t.radius.sm} />
             </View>
-            <View style={{ flex: 1, gap: t.space[1] }}>
-              <Text variant="bodyStrong">{i === 0 ? `${tr('common.of', { n: 1, total: photos.length })} · Main` : tr('common.of', { n: i + 1, total: photos.length })}</Text>
+            <View style={{ flex: 1, minWidth: 140, gap: t.space[1] }}>
+              <Text variant="bodyStrong">{i === 0 ? `${tr('common.of', { n: 1, total: photos.length })} · ${tr('a11y.mainPhoto')}` : tr('common.of', { n: i + 1, total: photos.length })}</Text>
               <View style={{ flexDirection: 'row', gap: t.space[1], alignItems: 'center' }}>
                 <Icon name={s.icon} size={16} color={s.color} />
                 <Text variant="caption" style={{ flex: 1, color: s.color }}>{s.text}</Text>
               </View>
             </View>
-            <View>
-              <IconButton icon="back" label={`${tr('onboarding.moveEarlier')}, photo ${i + 1}`} disabled={i === 0} onPress={() => move(i, -1)} size={36} style={{ transform: [{ rotate: '90deg' }] }} />
-              <IconButton icon="chevron" label={`${tr('onboarding.moveLater')}, photo ${i + 1}`} disabled={i === photos.length - 1} onPress={() => move(i, 1)} size={36} style={{ transform: [{ rotate: '90deg' }] }} />
+            <View style={{ flexDirection: 'row' }}>
+              <IconButton icon="moveUp" label={`${tr('onboarding.moveEarlier')}, ${tr('a11y.photoN', { n: i + 1 })}`} disabled={i === 0} onPress={() => move(i, -1)} size={36} />
+              <IconButton icon="moveDown" label={`${tr('onboarding.moveLater')}, ${tr('a11y.photoN', { n: i + 1 })}`} disabled={i === photos.length - 1} onPress={() => move(i, 1)} size={36} />
+              <IconButton icon="delete" label={`${tr('onboarding.removePhoto')} ${i + 1}`} onPress={() => remove(p)} size={36} />
             </View>
-            <IconButton icon="delete" label={`${tr('onboarding.removePhoto')} ${i + 1}`} onPress={() => remove(p)} size={36} />
           </Card>
         );
       })}

@@ -1,3 +1,4 @@
+import { links } from '@/lib/links';
 import type { NeeoApi } from './api';
 import { seedProfiles } from './seed';
 import {
@@ -15,8 +16,7 @@ import {
   type Preferences,
   type SupportTicket,
   type PreferencePreset,
-  type DatePlan,
-} from './types';
+  type DatePlan, Invite, MyFriendsTake } from './types';
 import { uid } from '@/lib/id';
 import { checkSync } from '@/services/textModeration';
 import { completeness } from './completeness';
@@ -325,11 +325,21 @@ export function createMockApi(): NeeoApi & { _state: ReturnType<typeof initialSt
         await delay();
         const c: CheckIn = { id: uid('ci'), status: 'scheduled', ...input };
         state.checkIns.push(c);
+        // In production this arrives as a push at check_in_at (checkin-escalation job).
+        state.inbox.unshift({ id: uid('in'), kind: 'check_in', title: 'Date check-in', body: `At ${input.place || 'your date'}: let us know you’re okay.`, createdAt: new Date().toISOString(), read: false, href: `/check-in-prompt/${c.id}` });
         return c;
       },
       async confirmCheckIn(id) {
         const c = state.checkIns.find((x) => x.id === id);
         if (c) c.status = 'checked_in';
+      },
+      async requestHelp(id) {
+        await delay();
+        const c = state.checkIns.find((x) => x.id === id);
+        if (c) c.status = 'help_requested';
+      },
+      async activeCheckIn() {
+        return [...state.checkIns].reverse().find((c) => c.status === 'scheduled') ?? null;
       },
       async appeal(body) {
         await delay();
@@ -444,6 +454,42 @@ export function createMockApi(): NeeoApi & { _state: ReturnType<typeof initialSt
         state.inbox.forEach((i) => (i.read = true));
       },
     },
+    invites: {
+      async list(kind) {
+        await delay(80);
+        return state.invites.filter((i) => i.kind === kind && i.status !== 'revoked').map((i) => ({ ...i })); // copies: callers must see changes
+      },
+      async create(kind, input) {
+        await delay();
+        if (input.name.trim().length < 2) throw new ApiError('unknown', 'Add their first name');
+        const token = uid('tok');
+        const inv: Invite = { id: uid('iv'), kind, name: input.name.trim(), phone: input.phone, status: 'sent', url: links.invite(token), createdAt: new Date().toISOString() };
+        state.invites.unshift(inv);
+        // Mock only: the person answers a moment later (in production they open the link on neeo.app/invite).
+        if (state.autoReply) setTimeout(() => respondToInvite(state, inv.id), 1500);
+        return inv;
+      },
+      async revoke(id) {
+        const i = state.invites.find((x) => x.id === id);
+        if (i) i.status = 'revoked';
+        if (i?.kind === 'chaperone' && !state.invites.some((x) => x.kind === 'chaperone' && x.status === 'accepted')) state.me.chaperoneEnabled = false;
+      },
+    },
+    friendsTakes: {
+      async mine() {
+        await delay(80);
+        return state.takes.map((x) => ({ ...x }));
+      },
+      async setApproved(id, approved) {
+        const tk = state.takes.find((x) => x.id === id);
+        if (tk) tk.approved = approved;
+        state.me.friendsTakes = state.takes.filter((x) => x.approved).map(({ id: i, author, text }) => ({ id: i, author, text }));
+      },
+      async remove(id) {
+        state.takes = state.takes.filter((x) => x.id !== id);
+        state.me.friendsTakes = state.takes.filter((x) => x.approved).map(({ id: i, author, text }) => ({ id: i, author, text }));
+      },
+    },
   };
 
   return Object.assign(api, { _state: state });
@@ -541,9 +587,26 @@ function initialState() {
     review: { status: 'active' } as { status: 'active' | 'under_review' | 'suspended'; reason?: string },
     appeals: [] as Appeal[],
     tickets: [] as SupportTicket[],
+    invites: [] as Invite[],
+    takes: [] as MyFriendsTake[],
     inbox: [
       { id: 'in_1', kind: 'photo_request_declined', title: 'Photo request', body: 'Chris chose to keep their photos private for now.', createdAt: ago(60 * 20), read: false },
       { id: 'in_2', kind: 'new_like', title: 'New like', body: 'Someone liked your answer about Sundays.', createdAt: ago(90), read: true },
     ] as InboxItem[],
   };
+}
+
+/** Mock only: what the invited person does from the neeo.app/invite link. */
+export function respondToInvite(state: ReturnType<typeof initialState>, inviteId: string) {
+  const inv = state.invites.find((i) => i.id === inviteId);
+  if (!inv || inv.status !== 'sent') return;
+  inv.status = 'accepted';
+  const now = new Date().toISOString();
+  if (inv.kind === 'chaperone') {
+    state.me.chaperoneEnabled = true;
+    state.inbox.unshift({ id: `in_${Date.now()}`, kind: 'chaperone_accepted', title: 'Chaperone added', body: `${inv.name} accepted. They can now read your chats when you add them to one.`, createdAt: now, read: false, href: '/settings/chaperone' });
+  } else {
+    state.takes.unshift({ id: `ft_${Date.now()}`, author: inv.name, text: 'Kind, curious and always the first to plan the next get-together.', approved: false });
+    state.inbox.unshift({ id: `in_${Date.now()}`, kind: 'friends_take', title: 'A Friend’s Take arrived', body: `${inv.name} wrote something about you. Read it and choose whether to show it.`, createdAt: now, read: false, href: '/settings/friends-take' });
+  }
 }

@@ -27,8 +27,8 @@ export function Toggle({ value, onValueChange, label, disabled, testID, decorati
       onValueChange={onValueChange}
       disabled={disabled}
       accessibilityLabel={label}
-      accessibilityRole="switch"
-      accessibilityState={{ checked: value, disabled: !!disabled }}
+      // web: react-native-web renders a native input[role=switch] inside; an outer role would nest controls
+      {...(Platform.OS === 'web' ? {} : { accessibilityRole: 'switch' as const, accessibilityState: { checked: value, disabled: !!disabled } })}
       trackColor={{ false: t.c.textMuted, true: t.c.action }}
       thumbColor={t.c.surface}
       ios_backgroundColor={t.c.textMuted}

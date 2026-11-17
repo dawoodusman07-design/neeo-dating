@@ -7,8 +7,9 @@ import 'react-native-url-polyfill/auto';
 import * as SecureStore from 'expo-secure-store';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { NeeoApi } from './api';
-import { ApiError, type Match, type Message, type Photo, type Profile, type MyProfile, type Preferences, type SupportTicket, type PreferencePreset, type SavedProfile, type DatePlan } from './types';
+import { ApiError, type Match, type Message, type Photo, type Profile, type MyProfile, type Preferences, type SupportTicket, type PreferencePreset, type SavedProfile, type DatePlan, type Invite } from './types';
 import { completeness } from './completeness';
+import { links } from '@/lib/links';
 import { runtimeConfig } from '@/config';
 
 const SIGNED_URL_TTL = 60 * 10; // 10 minutes
@@ -34,10 +35,10 @@ type ProfileRow = {
   date_ideas: string[]; blur_photos: boolean;
   photos?: { id: string; storage_path: string; blurred_path: string | null; position: number; status: Photo['status'] }[];
   prompts?: { id: string; question: string; answer: string; voice_path: string | null; voice_duration_sec: number | null; position: number }[];
-  friends_takes?: { id: string; author_name: string; body: string }[];
+  friends_takes?: { id: string; author_name: string; body: string; approved: boolean }[];
 };
 
-const PROFILE_SELECT = '*, photos(id, storage_path, blurred_path, position, status), prompts(*), friends_takes(id, author_name, body)';
+const PROFILE_SELECT = '*, photos(id, storage_path, blurred_path, position, status), prompts(*), friends_takes(id, author_name, body, approved)';
 
 function ageOf(dob: string) {
   const d = new Date(dob);
@@ -110,7 +111,7 @@ export function createSupabaseApi(sb: SupabaseClient = createSupabaseClient()): 
       prompts,
       basics: row.basics,
       dateIdeas: row.date_ideas,
-      friendsTakes: (row.friends_takes ?? []).map((f) => ({ id: f.id, author: f.author_name, text: f.body })),
+      friendsTakes: (row.friends_takes ?? []).filter((f) => f.approved).map((f) => ({ id: f.id, author: f.author_name, text: f.body })),
       chaperoneEnabled: row.chaperone_enabled,
     };
   }
@@ -452,6 +453,17 @@ export function createSupabaseApi(sb: SupabaseClient = createSupabaseClient()): 
       async confirmCheckIn(id) {
         await sb.from('check_ins').update({ status: 'checked_in' }).eq('id', id);
       },
+      async requestHelp(id) {
+        // check_ins_status_guard allows the owner to move scheduled -> help_requested; checkin-escalation sends the SMS.
+        const { error } = await sb.from('check_ins').update({ status: 'help_requested' }).eq('id', id);
+        if (error) mapError(error);
+        await sb.functions.invoke('checkin-escalation', { body: { checkInId: id } }).catch(() => {});
+      },
+      async activeCheckIn() {
+        const { data } = await sb.from('check_ins').select('*').eq('status', 'scheduled').order('check_in_at', { ascending: false }).limit(1).maybeSingle();
+        if (!data) return null;
+        return { id: data.id, matchId: data.match_id, place: data.place, startsAt: data.starts_at, checkInAt: data.check_in_at, contact: { name: data.contact_name, phone: data.contact_phone }, status: data.status };
+      },
       async appeal(text) {
         const me = await uid();
         const { data, error } = await sb.from('appeals').insert({ user_id: me, body: text }).select('*').single();
@@ -571,6 +583,37 @@ export function createSupabaseApi(sb: SupabaseClient = createSupabaseClient()): 
         if (error) mapError(error);
       },
     },
+    invites: {
+      async list(kind) {
+        const { data } = await sb.from('invites').select('*').eq('kind', kind).neq('status', 'revoked').order('created_at', { ascending: false });
+        return (data ?? []).map(mapInvite);
+      },
+      async create(kind, input) {
+        const me = await uid();
+        const { data, error } = await sb.from('invites').insert({ user_id: me, kind, name: input.name.trim(), phone: input.phone ?? null }).select('*').single();
+        if (error) mapError(error);
+        return mapInvite(data);
+      },
+      async revoke(id) {
+        const { error } = await sb.from('invites').update({ status: 'revoked' }).eq('id', id);
+        if (error) mapError(error);
+      },
+    },
+    friendsTakes: {
+      async mine() {
+        const me = await uid();
+        const { data } = await sb.from('friends_takes').select('*').eq('user_id', me).order('created_at', { ascending: false });
+        return (data ?? []).map((f) => ({ id: f.id, author: f.author_name, text: f.body, approved: f.approved }));
+      },
+      async setApproved(id, approved) {
+        const { error } = await sb.from('friends_takes').update({ approved }).eq('id', id);
+        if (error) mapError(error);
+      },
+      async remove(id) {
+        const { error } = await sb.from('friends_takes').delete().eq('id', id);
+        if (error) mapError(error);
+      },
+    },
     inbox: {
       async list() {
         const { data } = await sb.from('inbox_items').select('*').order('created_at', { ascending: false }).limit(100);
@@ -582,4 +625,8 @@ export function createSupabaseApi(sb: SupabaseClient = createSupabaseClient()): 
     },
   };
   return api;
+}
+
+function mapInvite(r: any): Invite {
+  return { id: r.id, kind: r.kind, name: r.name, phone: r.phone ?? undefined, status: r.status, url: links.invite(r.token), createdAt: r.created_at };
 }
