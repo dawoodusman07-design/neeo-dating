@@ -60,7 +60,7 @@ export default function DateCheckIn() {
           <Text variant="heading">{tr('checkIn.with', { name })}</Text>
         </View>
         <TextField label={tr('checkIn.place')} value={place} onChangeText={setPlace} placeholder="Café on Queen St W" />
-        <TextField label={`${tr('checkIn.when')} (hours from now)`} value={startsIn} onChangeText={(v) => setStartsIn(v.replace(/[^\d.]/g, ''))} keyboardType="decimal-pad" />
+        <TextField label={tr('checkIn.whenHours')} value={startsIn} onChangeText={(v) => setStartsIn(v.replace(/[^\d.]/g, ''))} keyboardType="decimal-pad" />
       </Card>
 
       <ListGroup title={tr('checkIn.contact')}>
@@ -73,7 +73,7 @@ export default function DateCheckIn() {
 
       <ListGroup title={tr('checkIn.checkInAfter')} footer={tr('checkIn.escalate')}>
         {OFFSETS.map((h) => (
-          <ListRow key={h} title={`${h} hour${h > 1 ? 's' : ''}`} selected={after === h} onPress={() => setAfter(h)} />
+          <ListRow key={h} title={tr('checkIn.hours', { count: h })} selected={after === h} onPress={() => setAfter(h)} />
         ))}
       </ListGroup>
 
@@ -86,9 +86,8 @@ export default function DateCheckIn() {
           <ListRow
             key={label}
             title={label}
-            icon={checks[i] ? 'check' : 'dash'}
+            checked={!!checks[i]}
             onPress={() => setChecks((c) => c.map((v, j) => (j === i ? !v : v)))}
-            accessibilityHint={checks[i] ? 'Checked' : 'Not checked'}
           />
         ))}
       </ListGroup>

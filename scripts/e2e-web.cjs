@@ -95,7 +95,7 @@ const BASE = `http://localhost:${PORT}`;
     await button(/^Your preferences/);
     await see('Travel mode');
     for (const name of ['Only show verified profiles', 'Only show profiles with a voice prompt', 'Travel mode']) {
-      assert.ok(await page.locator(`input[role="switch"][aria-label="${name}"]`).first().isDisabled(), `${name} is locked without Plus`);
+      assert.equal(await page.getByRole('switch', { name: new RegExp('^' + name) }).first().getAttribute('aria-disabled'), 'true', `${name} is locked without Plus`);
     }
     step('preferences: advanced filters and travel mode locked without Plus');
     await backToTabs();
@@ -136,9 +136,9 @@ const BASE = `http://localhost:${PORT}`;
     await backToTabs();
     await tab('You');
     await button(/^Your preferences/);
-    await page.locator('input[role="switch"][aria-label="Travel mode"]').first().click();
+    await page.getByRole('switch', { name: /^Travel mode/ }).first().click();
     await tid('travel-city').fill('Lahore');
-    await page.locator('input[role="switch"][aria-label="Only show verified profiles"]').first().click();
+    await page.getByRole('switch', { name: /^Only show verified profiles/ }).first().click();
     await tid('prefs-save').click();
     await page.getByRole('tablist').waitFor({ timeout: 8000 });
     await tab('You');

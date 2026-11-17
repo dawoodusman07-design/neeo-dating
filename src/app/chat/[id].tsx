@@ -144,7 +144,7 @@ export default function Conversation() {
           </View>
           <Text variant="small" color="textMuted">
             {matchedToday ? tr('chat.matchedToday') : tr('chat.matchedOn', { date: formatDate(match.data.matchedAt) })} ·{' '}
-            <Text variant="small" color="action" accessibilityRole="link" onPress={() => router.push({ pathname: '/profile/[id]', params: { id: p.id, matchId: id } })}>
+            <Text variant="small" color="action" accessibilityRole="link" style={{ textDecorationLine: 'underline' }} onPress={() => router.push({ pathname: '/profile/[id]', params: { id: p.id, matchId: id } })}>
               {tr('chat.viewProfile')}
             </Text>
           </Text>

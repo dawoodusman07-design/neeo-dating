@@ -1,5 +1,5 @@
 import React from 'react';
-import { View } from 'react-native';
+import { Platform, View } from 'react-native';
 import { useTheme } from '@/theme';
 import { IconButton } from './IconButton';
 import { Text } from './Text';
@@ -13,16 +13,20 @@ export function Stepper({ label, value, onChange, min, max, step = 1, suffix = '
   return (
     <View
       style={{ flexDirection: 'row', alignItems: 'center', gap: t.space[2], minHeight: 44 }}
-      accessible
-      accessibilityRole="adjustable"
-      accessibilityLabel={label}
-      accessibilityValue={{ min, max, now: value, text: `${value}${suffix}` }}
-      accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
-      onAccessibilityAction={(e) => onChange(clamp(value + (e.nativeEvent.actionName === 'increment' ? step : -step)))}
+      {...(Platform.OS === 'web'
+        ? { accessibilityRole: 'group' as const, accessibilityLabel: label }
+        : {
+            accessible: true,
+            accessibilityRole: 'adjustable' as const,
+            accessibilityLabel: label,
+            accessibilityValue: { min, max, now: value, text: `${value}${suffix}` },
+            accessibilityActions: [{ name: 'increment' }, { name: 'decrement' }],
+            onAccessibilityAction: (e: { nativeEvent: { actionName: string } }) => onChange(clamp(value + (e.nativeEvent.actionName === 'increment' ? step : -step))),
+          })}
     >
       <Text style={{ flex: 1 }}>{label}</Text>
       <IconButton icon="dash" label={`Decrease ${label}`} variant="surface" size={36} disabled={value <= min} onPress={() => onChange(clamp(value - step))} />
-      <Text variant="bodyStrong" style={{ minWidth: 64, textAlign: 'center' }}>{`${value}${suffix}`}</Text>
+      <Text variant="bodyStrong" style={{ minWidth: 64, textAlign: 'center' }} accessibilityLiveRegion="polite">{`${value}${suffix}`}</Text>
       <IconButton icon="add" label={`Increase ${label}`} variant="surface" size={36} disabled={value >= max} onPress={() => onChange(clamp(value + step))} />
     </View>
   );

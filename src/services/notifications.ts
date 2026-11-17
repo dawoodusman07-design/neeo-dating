@@ -4,14 +4,17 @@ import { AndroidImportance } from 'expo-notifications/build/NotificationChannelM
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: false,
-    shouldSetBadge: true,
-  }),
-});
+// Push is native-only; on web expo-notifications only logs "not supported" warnings.
+if (Platform.OS !== 'web') {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowBanner: true,
+      shouldShowList: true,
+      shouldPlaySound: false,
+      shouldSetBadge: true,
+    }),
+  });
+}
 
 export type PushPermission = 'granted' | 'denied' | 'undetermined';
 

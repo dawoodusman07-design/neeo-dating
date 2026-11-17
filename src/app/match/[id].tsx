@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { AccessibilityInfo, Animated, Easing, View } from 'react-native';
+import { AccessibilityInfo, Animated, Easing, View, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -25,7 +25,7 @@ export default function MatchCelebration() {
     if (!match.data) return;
     AccessibilityInfo.announceForAccessibility(`${tr('match.title')}. ${tr('match.body', { name })}`);
     if (reduce) scale.setValue(1);
-    else Animated.timing(scale, { toValue: 1, duration: t.motion.matchScaleIn, easing: Easing.out(Easing.back(1.4)), useNativeDriver: true }).start();
+    else Animated.timing(scale, { toValue: 1, duration: t.motion.matchScaleIn, easing: Easing.out(Easing.back(1.4)), useNativeDriver: Platform.OS !== 'web' }).start();
   }, [match.data, reduce, scale, t.motion.matchScaleIn, tr, name]);
 
   return (

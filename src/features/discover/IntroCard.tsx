@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, View, Platform } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme';
 import { Chip, IconButton, ProfilePhoto, ProgressBar } from '@/ui';
@@ -32,15 +32,24 @@ export function IntroCard({ profile, saved, canUndo, onUndo, onSave, onPhotoChan
   return (
     <ProfilePhoto uri={photo.uri} blurred={photo.blurred} label={tr('discover.photoOf', { n: index + 1, total, name: profile.firstName })}>
       <View style={{ position: 'absolute', inset: 0, flexDirection: 'row' }}>
-        <Pressable
-          style={{ flex: 1 }}
-          onPress={() => go(-1)}
-          accessibilityRole="adjustable"
-          accessibilityLabel={tr('a11y.photoProgress', { n: index + 1, total })}
-          accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
-          onAccessibilityAction={(e) => go(e.nativeEvent.actionName === 'increment' ? 1 : -1)}
-        />
-        <Pressable style={{ flex: 1 }} onPress={() => go(1)} importantForAccessibility="no" accessibilityElementsHidden />
+        {Platform.OS === 'web' ? (
+          <>
+            <Pressable style={{ flex: 1 }} onPress={() => go(-1)} accessibilityRole="button" accessibilityLabel={`${tr('a11y.previousPhoto')}, ${tr('a11y.photoProgress', { n: index + 1, total })}`} disabled={index === 0} />
+            <Pressable style={{ flex: 1 }} onPress={() => go(1)} accessibilityRole="button" accessibilityLabel={`${tr('a11y.nextPhoto')}, ${tr('a11y.photoProgress', { n: index + 1, total })}`} disabled={index >= total - 1} />
+          </>
+        ) : (
+          <>
+            <Pressable
+              style={{ flex: 1 }}
+              onPress={() => go(-1)}
+              accessibilityRole="adjustable"
+              accessibilityLabel={tr('a11y.photoProgress', { n: index + 1, total })}
+              accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
+              onAccessibilityAction={(e) => go(e.nativeEvent.actionName === 'increment' ? 1 : -1)}
+            />
+            <Pressable style={{ flex: 1 }} onPress={() => go(1)} importantForAccessibility="no" accessibilityElementsHidden />
+          </>
+        )}
       </View>
       <View style={{ position: 'absolute', top: t.space[2], start: t.space[3], end: t.space[3], gap: t.space[2] }} pointerEvents="box-none">
         <ProgressBar segments={total} value={(index + 1) / total} label={tr('a11y.photoProgress', { n: index + 1, total })} tone="onPhoto" />

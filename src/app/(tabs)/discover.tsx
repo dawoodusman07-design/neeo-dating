@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Animated, Easing, ScrollView, View } from 'react-native';
+import { Animated, Easing, ScrollView, View, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -44,7 +44,7 @@ export default function Discover() {
 
   const animateOut = (dir: 1 | -1, done: () => void) => {
     if (reduceMotion) return done();
-    Animated.timing(anim, { toValue: dir, duration: t.motion.likePass, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start(() => {
+    Animated.timing(anim, { toValue: dir, duration: t.motion.likePass, easing: Easing.out(Easing.cubic), useNativeDriver: Platform.OS !== 'web' }).start(() => {
       done();
       anim.setValue(0);
     });

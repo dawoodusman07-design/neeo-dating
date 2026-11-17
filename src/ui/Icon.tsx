@@ -1,6 +1,8 @@
 import React from 'react';
-import { I18nManager, Platform } from 'react-native';
+import { Platform } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme';
+import { isRTL } from '@/i18n';
 import { DIRECTIONAL, Icons, type IconName } from './icons';
 
 type Props = { name: IconName; size?: number; color?: string; fill?: string };
@@ -17,7 +19,8 @@ const hidden =
 export function Icon({ name, size, color, fill }: Props) {
   const t = useTheme();
   const C = Icons[name];
-  const mirror = I18nManager.isRTL && DIRECTIONAL.has(name);
+  const { i18n } = useTranslation(); // re-render when the language (and direction) changes
+  const mirror = isRTL(i18n.language) && DIRECTIONAL.has(name);
   return (
     <C
       size={size ?? t.size.iconRow}

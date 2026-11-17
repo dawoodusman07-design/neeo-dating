@@ -1,6 +1,6 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import { I18nManager } from 'react-native';
+import { I18nManager, Platform } from 'react-native';
 import { getLocales } from 'expo-localization';
 import en from './en';
 import ur from './ur';
@@ -23,10 +23,23 @@ i18n.use(initReactI18next).init({
 
 I18nManager.allowRTL(true);
 
+/** Is the current UI right-to-left? Web follows the language (react-native-web has no forceRTL). */
+export function isRTL(lang: string = i18n.language) {
+  return Platform.OS === 'web' ? RTL_LANGS.has(lang) : I18nManager.isRTL;
+}
+
 export function applyLocale(lang: Locale) {
   // eslint-disable-next-line import/no-named-as-default-member
   i18n.changeLanguage(lang);
   const rtl = RTL_LANGS.has(lang);
+  if (Platform.OS === 'web') {
+    // Applied immediately: the root column gets dir/lang (see app/_layout WebColumn).
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = lang;
+      document.documentElement.dir = rtl ? 'rtl' : 'ltr';
+    }
+    return { needsRestart: false };
+  }
   const needsRestart = I18nManager.isRTL !== rtl;
   I18nManager.forceRTL(rtl);
   return { needsRestart };

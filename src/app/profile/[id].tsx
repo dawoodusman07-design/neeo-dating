@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ScrollView, TextInput, View } from 'react-native';
+import { Platform, ScrollView, TextInput, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -65,7 +65,7 @@ export default function ProfileDetail() {
     <View style={{ flex: 1, backgroundColor: t.c.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', paddingTop: insets.top, paddingHorizontal: t.space[2], minHeight: 52 }}>
         <IconButton icon="back" label={tr('common.back')} onPress={() => router.back()} />
-        <Text variant="heading" style={{ flex: 1 }} numberOfLines={1}>
+        <Text variant="heading" style={{ flex: 1 }} numberOfLines={1} accessibilityRole="header">
           {p.firstName}
         </Text>
         <IconButton
@@ -80,7 +80,11 @@ export default function ProfileDetail() {
         <IconButton icon="info" label={tr('profile.notes')} onPress={() => { setNoteDraft(note.data ?? ''); setNotesOpen(true); }} testID="profile-notes" />
         <IconButton icon="more" label={tr('profile.more')} onPress={() => setMenu(true)} testID="profile-more" />
       </View>
-      <ScrollView contentContainerStyle={{ padding: t.space[4], gap: t.space[4], paddingBottom: t.space[8] }}>
+      <ScrollView
+        contentContainerStyle={{ padding: t.space[4], gap: t.space[4], paddingBottom: t.space[8] }}
+        // web: keyboard users can scroll a profile that has no focusable content (WCAG 2.1.1)
+        {...(Platform.OS === 'web' ? { focusable: true, accessibilityLabel: tr('a11y.profileOf', { name: p.firstName }) } : {})}
+      >
         {hero ? (
           <ProfilePhoto uri={hero.uri} blurred={hero.blurred} label={tr('discover.photoOf', { n: 1, total: p.photos.length, name: p.firstName })} />
         ) : null}

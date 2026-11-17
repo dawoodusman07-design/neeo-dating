@@ -14,13 +14,14 @@ type Props = {
   onPress?: () => void;
   toggle?: { value: boolean; onValueChange: (v: boolean) => void; disabled?: boolean };
   selected?: boolean; // radio-style row
+  checked?: boolean; // checkbox-style row
   destructive?: boolean;
   disabled?: boolean;
   accessibilityHint?: string;
   testID?: string;
 };
 
-export function ListRow({ title, subtitle, icon, value, onPress, toggle, selected, destructive, disabled, accessibilityHint, testID }: Props) {
+export function ListRow({ title, subtitle, icon, value, onPress, toggle, selected, checked, destructive, disabled, accessibilityHint, testID }: Props) {
   const t = useTheme();
   const body = (pressed: boolean) => (
     <View
@@ -51,7 +52,7 @@ export function ListRow({ title, subtitle, icon, value, onPress, toggle, selecte
           {value}
         </Text>
       ) : null}
-      {toggle ? <Toggle label={title} testID={testID} {...toggle} /> : null}
+      {toggle ? <Toggle label={title} decorative {...toggle} /> : null}
       {selected !== undefined ? (
         <View
           style={{
@@ -67,20 +68,51 @@ export function ListRow({ title, subtitle, icon, value, onPress, toggle, selecte
           {selected ? <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: t.c.action }} /> : null}
         </View>
       ) : null}
-      {onPress && !toggle && selected === undefined ? <Icon name="chevron" color={t.c.textMuted} /> : null}
+      {checked !== undefined ? (
+        <View
+          style={{
+            width: 22,
+            height: 22,
+            borderRadius: 6,
+            borderWidth: 2,
+            borderColor: checked ? t.c.action : t.c.textMuted,
+            backgroundColor: checked ? t.c.action : 'transparent',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          {checked ? <Icon name="check" size={14} color={t.c.onAction} /> : null}
+        </View>
+      ) : null}
+      {onPress && !toggle && selected === undefined && checked === undefined ? <Icon name="chevron" color={t.c.textMuted} /> : null}
     </View>
   );
   if (toggle) {
-    // The Switch itself is the accessible control; row text is its label.
-    return body(false);
+    // The whole row is the switch: a full-width target, one tab stop, label = row title.
+    const off = disabled || toggle.disabled;
+    return (
+      <Pressable
+        accessibilityRole="switch"
+        accessibilityLabel={subtitle ? `${title}, ${subtitle}` : title}
+        accessibilityHint={accessibilityHint}
+        accessibilityState={{ checked: !!toggle.value, disabled: !!off }}
+        aria-checked={!!toggle.value}
+        onPress={() => toggle.onValueChange(!toggle.value)}
+        disabled={off}
+        testID={testID}
+      >
+        {({ pressed }) => body(pressed)}
+      </Pressable>
+    );
   }
   if (!onPress) return <View accessible>{body(false)}</View>;
   return (
     <Pressable
-      accessibilityRole={selected !== undefined ? 'radio' : 'button'}
-      accessibilityLabel={[title, subtitle, value].filter(Boolean).join(', ')}
+      accessibilityRole={checked !== undefined ? 'checkbox' : selected !== undefined ? 'radio' : 'button'}
+      // No explicit label: the name is the row's own visible text (title, subtitle, value), so it always matches what is shown (WCAG 2.5.3).
       accessibilityHint={accessibilityHint}
-      accessibilityState={{ disabled: !!disabled, selected, checked: selected }}
+      accessibilityState={selected === undefined && checked === undefined ? { disabled: !!disabled } : { disabled: !!disabled, checked: checked ?? selected }}
+      aria-checked={checked ?? selected}
       onPress={onPress}
       disabled={disabled}
       testID={testID}

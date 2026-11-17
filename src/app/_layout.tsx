@@ -1,5 +1,4 @@
 import '@/config'; // validates build configuration first (fails closed outside development)
-import '@/i18n';
 import React, { useEffect, useMemo } from 'react';
 import { Platform, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
@@ -20,6 +19,8 @@ import { ThemeProvider, useTheme } from '@/theme';
 import { ToastHost } from '@/ui';
 import { useSession } from '@/stores/session';
 import { useBootSession } from '@/features/useBootSession';
+import { useSettings } from '@/stores/settings';
+import { applyLocale, RTL_LANGS } from '@/i18n';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -45,7 +46,13 @@ export default function RootLayout() {
 function RootStack({ ready }: { ready: boolean }) {
   const t = useTheme();
   const status = useSession((s) => s.status);
+  const locale = useSettings((s) => s.locale);
   useBootSession();
+
+  // Restore the saved language on launch (and apply changes made in Region & language).
+  useEffect(() => {
+    applyLocale(locale);
+  }, [locale]);
 
   useEffect(() => {
     SystemUI.setBackgroundColorAsync(t.c.bg).catch(() => {});
@@ -105,10 +112,14 @@ function RootStack({ ready }: { ready: boolean }) {
 /** On web, keep the phone layout: a centred column (max 480px) with `bg` outside it. Native: no-op. */
 function WebColumn({ children }: { children: React.ReactNode }) {
   const t = useTheme();
+  const locale = useSettings((s) => s.locale);
   if (Platform.OS !== 'web') return <>{children}</>;
+  const dir = RTL_LANGS.has(locale) ? 'rtl' : 'ltr';
   return (
     <View style={{ flex: 1, backgroundColor: t.c.tint, alignItems: 'center' }}>
       <View
+        // react-native-web resolves start/end styles from the nearest dir/lang
+        {...({ dir, lang: locale } as object)}
         style={{
           flex: 1,
           width: '100%',
