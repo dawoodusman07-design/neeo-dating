@@ -1,5 +1,5 @@
 import React from 'react';
-import { View } from 'react-native';
+import { ScrollView, View, useWindowDimensions } from 'react-native';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { Trans, useTranslation } from 'react-i18next';
@@ -15,15 +15,19 @@ export default function Welcome() {
   const { t: tr } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { height } = useWindowDimensions();
+  // Hero: ~40% of the screen, never so short that faces lose their eyes, never taller than the column is wide.
+  const heroHeight = Math.round(Math.min(Math.max(height * 0.4, 220), t.size.appMaxWidth * 0.85));
   const trust: [IconName, string][] = [
     ['verified', tr('welcome.trust1')],
     ['photoPrivacy', tr('welcome.trust2')],
     ['time', tr('welcome.trust3')],
   ];
   return (
-    <View style={{ flex: 1, backgroundColor: t.c.bg }}>
-      <View style={{ height: '42%' }}>
-        <Image source={{ uri: HERO }} style={{ flex: 1 }} contentFit="cover" accessibilityLabel={tr('welcome.heroAlt')} />
+    <ScrollView style={{ flex: 1, backgroundColor: t.c.bg }} contentContainerStyle={{ flexGrow: 1 }}>
+      <View style={{ height: heroHeight }}>
+        {/* Faces sit in the upper third of the photo: anchor the crop there so no width cuts them at the eyes. */}
+        <Image source={{ uri: HERO }} style={{ flex: 1 }} contentFit="cover" contentPosition={{ top: '22%', left: '50%' }} accessibilityLabel={tr('welcome.heroAlt')} />
         <View style={{ position: 'absolute', top: insets.top + t.space[3], start: t.space[4], backgroundColor: t.c.scrim, borderRadius: t.radius.pill, paddingHorizontal: t.space[4], paddingVertical: t.space[1] }}>
           <Text variant="heading" color="onPhoto" accessibilityRole="header" accessibilityLabel="Neeo">
             neeo
@@ -59,6 +63,6 @@ export default function Welcome() {
           </Text>
         </View>
       </View>
-    </View>
+    </ScrollView>
   );
 }

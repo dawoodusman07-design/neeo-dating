@@ -77,4 +77,6 @@ export const size = {
   iconTab: 22,
   iconRow: 20,
   iconStroke: 1.75,
+  /** Web: the app renders in a centred phone-width column; outside it is `bg`. */
+  appMaxWidth: 480,
 } as const;

@@ -1,6 +1,7 @@
 import '@/config'; // validates build configuration first (fails closed outside development)
 import '@/i18n';
 import React, { useEffect, useMemo } from 'react';
+import { Platform, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Stack, SplashScreen } from 'expo-router';
 import * as SystemUI from 'expo-system-ui';
@@ -58,7 +59,7 @@ function RootStack({ ready }: { ready: boolean }) {
 
   const signedIn = status === 'active' || status === 'paused' || status === 'underReview';
   return (
-    <>
+    <WebColumn>
       <StatusBar style={t.scheme === 'dark' ? 'light' : 'dark'} />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: t.c.bg } }}>
         <Stack.Protected guard={status === 'signedOut'}>
@@ -97,6 +98,30 @@ function RootStack({ ready }: { ready: boolean }) {
         <Stack.Screen name="index" />
       </Stack>
       <ToastHost />
-    </>
+    </WebColumn>
+  );
+}
+
+/** On web, keep the phone layout: a centred column (max 480px) with `bg` outside it. Native: no-op. */
+function WebColumn({ children }: { children: React.ReactNode }) {
+  const t = useTheme();
+  if (Platform.OS !== 'web') return <>{children}</>;
+  return (
+    <View style={{ flex: 1, backgroundColor: t.c.tint, alignItems: 'center' }}>
+      <View
+        style={{
+          flex: 1,
+          width: '100%',
+          maxWidth: t.size.appMaxWidth,
+          backgroundColor: t.c.bg,
+          borderStartWidth: 1,
+          borderEndWidth: 1,
+          borderColor: t.c.border,
+          overflow: 'hidden',
+        }}
+      >
+        {children}
+      </View>
+    </View>
   );
 }

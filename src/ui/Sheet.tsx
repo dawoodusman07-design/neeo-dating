@@ -22,6 +22,9 @@ export function Sheet({ visible, onClose, title, children }: Props) {
             borderTopRightRadius: t.radius.lg,
             paddingBottom: insets.bottom + t.space[4],
             maxHeight: '90%',
+            width: '100%',
+            maxWidth: t.size.appMaxWidth, // web: stay inside the phone column
+            alignSelf: 'center',
           }}
         >
           <View style={{ alignItems: 'center', paddingTop: t.space[2] }}>
