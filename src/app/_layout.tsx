@@ -123,7 +123,8 @@ function WebColumn({ children }: { children: React.ReactNode }) {
       el.id = 'neeo-focus';
       document.head.appendChild(el);
     }
-    el.textContent = `:focus-visible{outline:3px solid ${t.c.focus} !important;outline-offset:2px !important;border-radius:6px}`;
+    // Text inputs already draw a 2px focus-colour border on their field, so they skip the outline (no double ring).
+    el.textContent = `:focus-visible{outline:3px solid ${t.c.focus} !important;outline-offset:2px !important;border-radius:6px}input:focus-visible,textarea:focus-visible{outline:none !important}`;
   }, [t.c.focus]);
   if (Platform.OS !== 'web') return <>{children}</>;
   const dir = RTL_LANGS.has(locale) ? 'rtl' : 'ltr';
