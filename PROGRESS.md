@@ -9,11 +9,15 @@ _Last updated: 2026-11-17_
 | `npx tsc --noEmit` (strict) | ✅ 0 errors |
 | `npx expo lint` | ✅ 0 errors, 0 warnings |
 | `npm run check:tokens` | ✅ 0 hard-coded colours, 0 emoji in `src/` |
-| `npm test` (Jest + RNTL) | ✅ 88 tests: WCAG contrast, age gate, distance rounding, chat cap, nudges, validation, mock backend paths, membership states, Plus rules, synced lists, UI kit accessibility |
-| `npm run test:rls` | ✅ 74 RLS / server-rule checks against real Postgres 16 (see `supabase/tests/rls.test.sql`) |
-| `npm run e2e:web` | ✅ 22 steps in the real app (web build): sign-up errors, age gate, free likes, Plus-locked filters, purchase failed / pending → confirmed / restore, travel mode, membership states, like → match → chat, nudge, report, block, end connection, support, reauth failure, delete |
+| `npm test` (Jest + RNTL) | ✅ 141 tests: WCAG contrast (every text/surface pair, both modes), age gate, distance rounding, chat cap, nudges, validation, mock backend paths, membership states, Plus rules, synced lists, invites / Friend’s Take / check-in help, UI kit accessibility |
+| `npm run test:rls` | ✅ 86 RLS / server-rule checks against real Postgres 16 (see `supabase/tests/rls.test.sql`) |
+| `npm run e2e:web` | ✅ 27 steps in the real app (web build), incl. date check-in prompt, Friend’s Take, chaperone invite, What’s new and the Urdu switch |
 | `expo export --platform android` | ✅ Hermes bundle builds |
 | Maestro flows (`maestro/`) | ⚠️ Written, **not run** — this environment has no iOS simulator / Android emulator |
+
+## UX/UI QA pass (2026-11-17)
+
+See `qa/QA_REPORT.md` and the contact sheet `qa/index.html` (1,033 screenshots: 320/390/430 × light/dark, 200% zoom, RTL). 45 issues found, 40 fixed; 0 automated findings (axe-core, console, overflow, target size, copy) remain in any configuration. Added: date check-in prompt (“I’m okay” / alert), chaperone and Friend’s Take invitations (`invites` table + `invite-respond` function + `web/invite.html`), voice re-record, loading skeletons and load-failure states, Help & what’s new. Open: repo visibility (yours), native-speaker Urdu/Arabic, device-only checks.
 
 ## Decisions applied (2026-11-12)
 
@@ -92,9 +96,9 @@ RevenueCat paywall (comparison table with text alternatives, plan radio group, r
 - **Photo reordering** uses accessible move-earlier / move-later buttons rather than a drag gesture. A drag gesture (reanimated + gesture-handler) is still to do; the buttons must stay for screen-reader users anyway.
 - `src/data/supabase.ts` type-checks and follows the schema, and the schema/RLS are tested, but the client has **not been run against a live Supabase project** yet. Edge Functions are written but not deployed or tested.
 - Preferences are saved and applied in `daily_introductions` (RLS-tested). Plus features are enforced server-side from the `entitlements` table, which the RevenueCat webhook keeps current.
-- Friend's Take shows on profiles; the invite-a-friend flow is not built. Local events (P3) not started.
+- Friend’s Take invitations are built (friend writes it on neeo.app/invite; you approve). `web/invite.html` needs the Functions URL set at deploy time. Local events (P3) not started.
 - Waveforms for newly recorded voice clips are placeholders (no amplitude analysis yet).
-- Urdu and Arabic contain only a few strings (fallback to English) and are marked `[TRANSLATION REVIEW]`. RTL layout uses start/end throughout but has not been checked visually on a device.
+- Urdu has core navigation/Welcome/Discover strings, Arabic only a few (fallback to English); both `[TRANSLATION REVIEW]`. RTL was checked on the web build (Urdu switch, E2E-tested), not yet on a device.
 - 200% font scale, VoiceOver and TalkBack have been designed for (roles, labels, states, live regions, hit areas) but **not tested on devices**.
 - Store screenshots were captured from the web build of the same app; re-capture from device builds before submission so the native status bar and system fonts are exact.
 - The app icon and splash are token-generated placeholders; a designer should replace them.

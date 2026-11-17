@@ -260,6 +260,19 @@ const BASE = `http://localhost:${PORT}`;
     await see('What’s new');
     step('You → Help and what’s new');
     await backToTabs();
+
+    // ---- Urdu: switch → RTL + Urdu strings → back to English (QA pass) ----
+    await tab('You');
+    await button(/^Settings/);
+    await button(/^Region & language/);
+    await page.getByRole('radio', { name: /^Urdu/ }).click();
+    await see('علاقہ اور زبان');
+    assert.equal(await page.evaluate(() => document.documentElement.dir), 'rtl', 'Urdu sets right-to-left');
+    await page.getByRole('radio', { name: /^English/ }).click();
+    await see('Region & language');
+    assert.equal(await page.evaluate(() => document.documentElement.dir), 'ltr', 'English restores left-to-right');
+    step('Urdu switch: RTL + Urdu strings, then back to English');
+    await backToTabs();
     await tab('Chats');
     await page.waitForTimeout(500);
 

@@ -114,6 +114,17 @@ function RootStack({ ready }: { ready: boolean }) {
 function WebColumn({ children }: { children: React.ReactNode }) {
   const t = useTheme();
   const locale = useSettings((s) => s.locale);
+  // Keyboard focus ring in the theme's focus colour (the browser default is invisible on the dark theme). WCAG 2.4.7.
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof document === 'undefined') return;
+    let el = document.getElementById('neeo-focus') as HTMLStyleElement | null;
+    if (!el) {
+      el = document.createElement('style');
+      el.id = 'neeo-focus';
+      document.head.appendChild(el);
+    }
+    el.textContent = `:focus-visible{outline:3px solid ${t.c.focus} !important;outline-offset:2px !important;border-radius:6px}`;
+  }, [t.c.focus]);
   if (Platform.OS !== 'web') return <>{children}</>;
   const dir = RTL_LANGS.has(locale) ? 'rtl' : 'ltr';
   return (

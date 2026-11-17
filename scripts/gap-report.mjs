@@ -358,6 +358,27 @@ md.push('| ID | Screen | Field | Package | Ours (i18n key) | Why different |', '
 for (const d of copyDiffs) md.push(`| ${d.id} | ${esc(d.name)} | ${d.field} | ${esc(d.theirs)} | ${esc(d.ours)} (\`${d.key}\`) | ${esc(DELIBERATE[`${d.id}.${d.field}`] ?? '**unexplained — review**')} |`);
 md.push('');
 
+// Flows the QA pass (2026-11-17) found missing or incomplete and added. Not in the design package;
+// built with the existing components. Kept here so regenerating the report keeps them.
+const QA_ADDED = [
+  ['Match → first message', '/match/[id] → /chat/[id]', 'existed', 'Verified: “Send a message” opens the chat with the composer focused'],
+  ['Photo request → approve / decline / revoke', '/photo-request/[id], /settings/photo-privacy', 'existed', 'Verified in the crawl (request inbox: Share / Decline, revoke)'],
+  ['Date check-in prompt', '/check-in-prompt/[id]', 'added', '“Are you okay?” → I’m okay (state checkin-safe) / I need help (confirm → state checkin-alert-sent); Chats card + inbox item while a check-in is active'],
+  ['Chaperone invite → accepted', '/settings/chaperone', 'added', 'Name + phone → private link (neeo.app/invite) → accepted; remove at any time; invites table + invite-respond function'],
+  ['Friend’s Take invite → received → shown', '/settings/friends-take', 'added', 'Friend writes it on neeo.app/invite; owner reads it first, then shows/hides/deletes; only approved takes appear on the profile'],
+  ['Voice prompt record → re-record → delete', '/onboarding/prompts', 'added', 'Listen back, record again, delete (was record/delete only)'],
+  ['Filters: Free vs Plus locked', '/settings/preferences', 'existed', 'Verified: Plus filters locked for Free, unlocked on Plus'],
+  ['Pause → resume', '/settings/pause, /state/paused', 'existed', 'Verified'],
+  ['Notification permission denied → how to enable', '/onboarding/notifications, /settings/notifications', 'added', 'Denied now stays on the step and explains how to turn notifications on (was: moved on silently)'],
+  ['Urdu language switch end to end', '/settings/region', 'fixed', 'Saved language restored on launch; web applies dir=rtl/lang; core strings translated [TRANSLATION REVIEW]'],
+  ['Help / What’s new from You', '/(tabs)/you → /settings/help → /info/whats-new', 'added', 'New “Help and what’s new” row on You'],
+  ['Loading / offline / empty states', 'Discover, Chats, Likes, profile', 'added', 'Skeletons, load-failure with Try again, empty account and daily-limit states (dev menu scenarios)'],
+];
+md.push('## Added in the QA pass (2026-11-17)', '');
+md.push('| Flow | Route | Status | Notes |', '|---|---|---|---|');
+for (const [f, r, st, n] of QA_ADDED) md.push(`| ${esc(f)} | \`${esc(r)}\` | ${st} | ${esc(n)} |`);
+md.push('');
+
 writeFileSync(join(ROOT, 'GAP_REPORT.md'), md.join('\n'));
 console.log(`GAP_REPORT.md: ${total} screens — ${counts.built} built, ${counts.partial} partial, ${counts.missing} missing; ${copyDiffs.length} copy differences`);
 if (veraApp.length) {
