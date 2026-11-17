@@ -66,7 +66,7 @@ export default function Compare() {
         ))}
       </Card>
       {plans.isError ? (
-        <ErrorState title={tr('plus.loadFailed')} body={tr('states.offline.body')} action={{ title: tr('common.retry'), onPress: () => plans.refetch() }} />
+        <ErrorState title={tr('plus.loadFailed')} body={tr('states.loadFailed.body')} action={{ title: tr('common.retry'), onPress: () => plans.refetch() }} />
       ) : plans.data ? (
         <ListGroup title={tr('plus.choosePlan')} footer={purchases.isTestStore ? tr('plus.testStore') : undefined}>
           {plans.data.map((p) => (

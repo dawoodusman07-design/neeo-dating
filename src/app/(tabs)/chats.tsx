@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTheme } from '@/theme';
-import { Avatar, Button, Card, contentName, EmptyState, Icon, ListGroup, ListRow, Text, VerifiedBadge } from '@/ui';
+import { Avatar, Button, Card, contentName, EmptyState, ErrorState, Skeleton, Icon, ListGroup, ListRow, Text, VerifiedBadge } from '@/ui';
 import { api, type Match } from '@/data';
 import { qk, useMatches } from '@/data/hooks';
 import { chatCapState } from '@/lib/chatCap';
@@ -51,6 +51,14 @@ export default function Chats() {
       <View style={{ flex: 1, backgroundColor: t.c.bg, paddingTop: insets.top }}>
         <Text variant="title" style={{ padding: t.space[4] }}>{tr('chats.title')}</Text>
         <EmptyState icon="chats" title={tr('chats.emptyTitle')} body={tr('chats.emptyBody')} action={{ title: tr('chats.emptyAction'), onPress: () => router.navigate('/discover') }} />
+      </View>
+    );
+
+  if (matches.isLoading || matches.isError)
+    return (
+      <View style={{ flex: 1, backgroundColor: t.c.bg, paddingTop: insets.top }}>
+        <Text variant="title" style={{ paddingHorizontal: t.space[4], paddingTop: t.space[4] }} accessibilityRole="header">{tr('chats.title')}</Text>
+        {matches.isLoading ? <Skeleton variant="rows" /> : <ErrorState icon="offline" title={tr('states.loadFailed.title')} body={tr('states.loadFailed.body')} action={{ title: tr('common.retry'), onPress: () => matches.refetch() }} />}
       </View>
     );
 

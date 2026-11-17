@@ -40,9 +40,9 @@ if (!C) throw new Error(`unknown config ${config}`);
 
 // ---------------------------------------------------------------- routes
 const STATES = ['purchase-pending', 'purchase-failed', 'purchase-cancelled', 'purchase-success', 'restored', 'restore-none', 'billing-issue', 'session-expired', 'export-ready', 'export-expired', 'offline', 'upload-failed', 'account-review', 'suspended', 'paused', 'deleted', 'not-found', 'reauth-failed', 'appeal-sent', 'support-received', 'report-sent', 'connection-ended', 'blocked'];
-const INFO = ['about', 'matching', 'photo-privacy', 'plus-faq', 'safety', 'community', 'privacy-summary', 'subscription-terms', 'refunds'];
+const INFO = ['whats-new', 'about', 'matching', 'photo-privacy', 'plus-faq', 'safety', 'community', 'privacy-summary', 'subscription-terms', 'refunds'];
 const ONBOARDING = ['dob', 'not-eligible', 'name', 'intention', 'photos', 'prompts', 'date-ideas', 'preferences', 'location', 'agreement', 'notifications', 'verify', 'review'];
-const SETTINGS = ['account', 'edit-profile', 'photos', 'photo-privacy', 'preferences', 'notifications', 'quiet-hours', 'region', 'appearance', 'readability', 'safety', 'block-contacts', 'blocked', 'help', 'export', 'pause', 'appeal', 'logout', 'delete-account'];
+const SETTINGS = ['chaperone', 'friends-take', 'account', 'edit-profile', 'photos', 'photo-privacy', 'preferences', 'notifications', 'quiet-hours', 'region', 'appearance', 'readability', 'safety', 'block-contacts', 'blocked', 'help', 'export', 'pause', 'appeal', 'logout', 'delete-account'];
 const MEMBERSHIP = ['free', 'pending', 'active', 'renewal_off', 'billing_issue', 'expired'];
 /** Screens on which the tab bar must NOT be visible (HIG: focused tasks hide the tab bar). */
 const NO_TABBAR = /^\/(chat\/|profile|plus|match|report|block|unblock|unmatch|check-in|share-photos|photo-request|membership\/cancel|reauth)/;
@@ -201,6 +201,11 @@ const COPY_RULES = [
     await tid('otp-input').fill('123456');
     await page.waitForTimeout(1200);
     for (const o of ONBOARDING) await visit(`/onboarding/${o}`, `onboarding-${o}`);
+    await step('onboarding-notifications-denied', '/onboarding/notifications', async () => {
+      await nav('/onboarding/notifications');
+      await tid('notif-allow').click();
+      await tid('notifications-off').waitFor({ timeout: 5000 });
+    });
     await step('onboarding-dob-under18', '/onboarding/dob', async () => {
       await nav('/onboarding/dob');
       await tid('dob-input').fill('2012-01-01');
@@ -250,6 +255,30 @@ const COPY_RULES = [
       await tid('dev-membership-free').click();
     });
     for (const s of SETTINGS) await visit(`/settings/${s}`, `settings-${s}`);
+    // ---- edge states (mock toggles in the dev menu) ----
+    const dev = async (id) => {
+      await nav('/dev');
+      await tid(id).click();
+      await page.waitForTimeout(300);
+    };
+    await dev('dev-slow');
+    for (const r of ['/discover', '/chats', '/likes']) {
+      await step(`loading${r.replace('/', '-')}`, r, async () => {
+        await page.evaluate((u) => { history.pushState({}, '', u); dispatchEvent(new PopStateEvent('popstate', { state: history.state })); }, r);
+        await page.waitForTimeout(250);
+      });
+    }
+    await page.waitForTimeout(3500);
+    await dev('dev-slow');
+    await dev('dev-offline');
+    for (const r of ['/discover', '/chats', '/likes']) await visit(r, `offline${r.replace('/', '-')}`);
+    await dev('dev-offline');
+    await dev('dev-scenario-empty');
+    for (const r of ['/discover', '/chats', '/likes', '/notifications']) await visit(r, `empty${r.replace('/', '-')}`);
+    await dev('dev-scenario-daily_limit');
+    await visit('/discover', 'daily-limit-reached');
+    await dev('dev-scenario-demo');
+    await visit('/check-in-prompt/none', 'check-in-prompt-none');
     for (const r of ['/notifications', '/saved', '/appeals', '/account-review', '/reauth', '/verify', '/support', '/support/inbox']) await visit(r, r.slice(1).replace('/', '-'));
     await visit('/report/p_maya?name=Maya&matchId=m_ayesha', 'report');
     await visit('/photo-request/p_omar', 'photo-request');

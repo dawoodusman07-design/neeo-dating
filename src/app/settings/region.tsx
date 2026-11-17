@@ -7,8 +7,9 @@ import { notify } from '@/lib/confirm';
 
 const LANGS: { key: Locale; label: string }[] = [
   { key: 'en', label: 'English' },
-  { key: 'ur', label: 'اردو (Urdu) — preview' },
-  { key: 'ar', label: 'العربية (Arabic) — preview' },
+  // Isolate the Urdu/Arabic names (U+2068/U+2069) so mixed-direction labels read in the right order in both layouts.
+  { key: 'ur', label: 'Urdu (\u2068اردو\u2069) — preview' },
+  { key: 'ar', label: 'Arabic (\u2068العربية\u2069) — preview' },
 ];
 const REGIONS = [
   { key: 'CA', label: 'Canada' },

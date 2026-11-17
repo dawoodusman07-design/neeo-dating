@@ -28,7 +28,28 @@ export const DEMO_ONBOARDED_PHONE = '+15555550199';
 export const DAILY_LIMIT = 8;
 const MAX_ATTEMPTS = 5;
 
-const delay = (ms = 250) => new Promise((r) => setTimeout(r, ms));
+/** Dev menu: simulate a slow or missing connection (mock only). */
+export const mockNetwork = { slowMs: 0, offline: false };
+const delay = async (ms = 250) => {
+  if (mockNetwork.offline) throw new ApiError('offline', 'You’re offline');
+  await new Promise((r) => setTimeout(r, ms + mockNetwork.slowMs));
+};
+
+/** Dev menu: put the demo account into an edge state (mock only). */
+export function setMockScenario(state: ReturnType<typeof initialState>, scenario: 'empty' | 'daily_limit' | 'demo') {
+  if (scenario === 'empty') {
+    state.matches = [];
+    state.received = [];
+    state.sent = [];
+    state.inbox = [];
+    state.acted = new Set(['p_maya', 'p_lena', 'p_omar', 'p_ayesha']);
+    state.seenToday = 0;
+  } else if (scenario === 'daily_limit') {
+    state.seenToday = DAILY_LIMIT;
+  } else {
+    Object.assign(state, initialState(), { me: state.me, onboarded: state.onboarded });
+  }
+}
 const ago = (min: number) => new Date(Date.now() - min * 60_000).toISOString();
 
 /** In-memory backend. Deterministic enough for tests and store screenshots. */

@@ -23,3 +23,4 @@ export * from './Stepper';
 export * from './RadioGroup';
 export * from './FieldError';
 export * from './a11y';
+export * from './Skeleton';

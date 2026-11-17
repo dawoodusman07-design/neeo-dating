@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/theme';
-import { Button, Card, Chip, EmptyState, IconButton, ProfilePhoto, Sheet, Text, TextField, toast } from '@/ui';
+import { Button, Card, Chip, EmptyState, IconButton, ProfilePhoto, Sheet, Skeleton, Text, TextField, toast } from '@/ui';
 import { type LikeTarget } from '@/data';
 import { useLike, useMe, useNote, useProfile, useSavedProfiles, useToggleSaved } from '@/data/hooks';
 import { api } from '@/data';
@@ -35,7 +35,7 @@ export default function ProfileDetail() {
   const [noteDraft, setNoteDraft] = useState('');
   useScreenProtection(`profile-${id}`);
 
-  if (q.isLoading) return <View style={{ flex: 1, backgroundColor: t.c.bg }} />;
+  if (q.isLoading) return <View style={{ flex: 1, backgroundColor: t.c.bg, paddingTop: insets.top }}><Skeleton variant="profile" /></View>;
   if (!q.data)
     return <EmptyState icon="you" title={tr('states.not-found.title')} body={tr('states.not-found.body')} action={{ title: tr('common.back'), onPress: () => router.back() }} />;
 
