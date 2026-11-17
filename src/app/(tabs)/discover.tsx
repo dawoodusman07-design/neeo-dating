@@ -87,7 +87,7 @@ export default function Discover() {
       </View>
       <View>
         <IconButton icon="notifications" label={unread ? `${tr('discover.inbox')}, ${tr('a11y.unread', { count: unread })}` : tr('discover.inbox')} onPress={() => router.push('/notifications')} testID="inbox" />
-        {unread ? <View pointerEvents="none" style={{ position: 'absolute', top: 8, end: 8, width: 10, height: 10, borderRadius: 5, backgroundColor: t.c.action }} /> : null}
+        {unread ? <View pointerEvents="none" style={{ position: 'absolute', top: 8, end: 8, width: 10, height: 10, borderRadius: 5, backgroundColor: t.c.accent }} /> : null}
       </View>
       <IconButton icon="preferences" label={tr('discover.filters')} onPress={() => router.push('/settings/preferences')} />
     </View>

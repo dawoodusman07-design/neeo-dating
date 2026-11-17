@@ -2,45 +2,49 @@
  * Neeo design tokens — the ONLY place colour literals may appear in src/.
  * Enforced by eslint (no-restricted-syntax) and scripts/check-tokens.mjs.
  */
+/** Palette: "Terracotta and sand" (2026-11-17). */
 export const color = {
   light: {
-    bg: '#FFFAFD',
+    bg: '#FBF7F2', // sand
     surface: '#FFFFFF',
-    tint: '#F6EDF3',
-    chip: '#FBE7EF',
-    text: '#2D1D2B',
-    textMuted: '#6E5A69',
-    border: '#EBDDE6',
-    action: '#BD2858',
-    actionPressed: '#9E1F49',
-    brandDeep: '#74315B',
-    success: '#15803D',
-    danger: '#B91C1C',
+    tint: '#F4ECE4',
+    chip: '#F6E7DE',
+    text: '#2A211C',
+    textMuted: '#6A5A50',
+    border: '#EADDD2',
+    action: '#A8432A', // terracotta: primary buttons, like button, heart
+    actionPressed: '#8E3622',
+    brandDeep: '#7A2F1D',
+    /** Sage green: verified badge, new/unread markers, match highlight. Text-safe (≥4.5:1). */
+    accent: '#2F6B5E',
+    success: '#147839', // brief: #15803D (4.16:1 on chip, 4.29:1 on tint); 6% darker to pass AA 4.5:1 on every surface
+    danger: '#B91C1C', // always paired with an icon + text (warm red, close to terracotta)
     onAction: '#FFFFFF',
-    // Supporting tokens (not in the original brief, needed for a11y):
-    scrim: 'rgba(20, 10, 18, 0.72)', // dark scrim behind text on photos
+    // Supporting tokens (a11y):
+    scrim: 'rgba(26, 18, 14, 0.72)', // warm dark scrim behind text on photos
     onPhoto: '#FFFFFF',
-    overlay: 'rgba(20, 10, 18, 0.45)', // sheet backdrop
-    focus: '#74315B',
+    overlay: 'rgba(26, 18, 14, 0.45)', // sheet backdrop
+    focus: '#7A2F1D',
   },
   dark: {
-    bg: '#1A1219',
-    surface: '#24192A',
-    tint: '#2E2233',
-    chip: '#3A2433',
-    text: '#F6EDF3',
-    textMuted: '#BBA9B6',
-    border: '#3A2D3A',
-    action: '#E0577F',
-    actionPressed: '#D4507A', // brief had #C94770 (4.04:1 under onAction); adjusted to pass AA 4.5:1
-    brandDeep: '#D99BC0',
+    bg: '#1A1411',
+    surface: '#241C18',
+    tint: '#2C221D',
+    chip: '#3A2A23',
+    text: '#F5EDE7',
+    textMuted: '#BFAEA3',
+    border: '#3A2E28',
+    action: '#E8896C',
+    actionPressed: '#D9745A',
+    brandDeep: '#F2B8A4',
+    accent: '#6FBFAE',
     success: '#4ADE80',
     danger: '#F87171',
-    onAction: '#1A1219',
-    scrim: 'rgba(10, 5, 9, 0.75)',
+    onAction: '#1A1411',
+    scrim: 'rgba(12, 8, 6, 0.75)',
     onPhoto: '#FFFFFF',
     overlay: 'rgba(0, 0, 0, 0.6)',
-    focus: '#D99BC0',
+    focus: '#F2B8A4',
   },
 } as const;
 

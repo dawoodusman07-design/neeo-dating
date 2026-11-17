@@ -1,6 +1,6 @@
 # Neeo — progress
 
-_Last updated: 2026-11-12_
+_Last updated: 2026-11-17_
 
 ## Verification status (all run in this repo, all passing)
 
@@ -88,7 +88,7 @@ RevenueCat paywall (comparison table with text alternatives, plan radio group, r
 ## Known gaps / honest notes
 
 - **The reference prototype was not in the repo** (`./reference-prototype/` was missing), so screens and copy were built from the spec in the brief, not from the 124-screen prototype. Once you add it, I can diff screen-by-screen and fill any gaps.
-- **Token change:** dark `actionPressed` was `#C94770` in the brief, which gives only 4.04:1 under `onAction` text. Changed to `#D4507A` (4.57:1) so pressed buttons pass AA. Everything else is as specified.
+- **Palette "Terracotta and sand" (2026-11-17):** all tokens as specified except light `success`: the brief's `#15803D` gives 4.16:1 on `chip` and 4.29:1 on `tint`, so it is `#147839` (passes 4.5:1 on every surface). Sage `accent` marks verified, new/unread and the match highlight; like/heart stay terracotta `action`. Every error shows an icon + text (danger and terracotta are both warm reds). `__tests__/contrast.test.ts` checks every text/background pair in both modes.
 - **Photo reordering** uses accessible move-earlier / move-later buttons rather than a drag gesture. A drag gesture (reanimated + gesture-handler) is still to do; the buttons must stay for screen-reader users anyway.
 - `src/data/supabase.ts` type-checks and follows the schema, and the schema/RLS are tested, but the client has **not been run against a live Supabase project** yet. Edge Functions are written but not deployed or tested.
 - Preferences are saved and applied in `daily_introductions` (RLS-tested). Plus features are enforced server-side from the `entitlements` table, which the RevenueCat webhook keeps current.

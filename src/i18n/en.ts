@@ -122,6 +122,7 @@ const en = {
     promptVoiceRecorded: 'Voice answer · {{duration}}',
     promptVoiceRemove: 'Remove voice answer',
     recording: 'Recording… tap to stop',
+    micDenied: 'Microphone access is off. You can turn it on in Settings.',
     dateIdeasTitle: 'First date ideas',
     dateIdeasBody: 'Pick up to 3. They help matches suggest a plan you’ll both enjoy.',
     locationTitle: 'Find people nearby',
@@ -191,6 +192,7 @@ const en = {
   },
   match: {
     title: 'It’s a match',
+    newConnection: 'New connection',
     body: 'You and {{name}} liked each other. Say hello whenever you’re ready.',
     send: 'Send a message',
     later: 'Keep browsing',

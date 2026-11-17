@@ -121,7 +121,7 @@ export default function Conversation() {
       return;
     }
     const { granted } = await requestRecordingPermissionsAsync();
-    if (!granted) return toast('Microphone access is off. You can turn it on in Settings.', 'error');
+    if (!granted) return toast(tr('onboarding.micDenied'), 'error');
     await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
     await recorder.prepareToRecordAsync();
     recorder.record();

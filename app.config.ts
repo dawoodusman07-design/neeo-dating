@@ -77,7 +77,7 @@ const config: ExpoConfig = {
   android: {
     package: bundleId,
     adaptiveIcon: {
-      backgroundColor: '#FFFAFD',
+      backgroundColor: '#FBF7F2',
       foregroundImage: './assets/android-icon-foreground.png',
       backgroundImage: './assets/android-icon-background.png',
       monochromeImage: './assets/android-icon-monochrome.png',
@@ -107,8 +107,8 @@ const config: ExpoConfig = {
         image: './assets/splash-icon.png',
         imageWidth: 160,
         resizeMode: 'contain',
-        backgroundColor: '#FFFAFD',
-        dark: { image: './assets/splash-icon.png', backgroundColor: '#1A1219' },
+        backgroundColor: '#FBF7F2',
+        dark: { image: './assets/splash-icon.png', backgroundColor: '#1A1411' },
       },
     ],
     'expo-font',
@@ -129,7 +129,7 @@ const config: ExpoConfig = {
       },
     ],
     ['expo-contacts', { contactsPermission: 'Used only for “Block contacts”, so people you know do not see your profile.' }],
-    ['expo-notifications', { color: '#BD2858' }],
+    ['expo-notifications', { color: '#A8432A' }],
   ],
   experiments: { typedRoutes: true },
   extra: {

@@ -38,7 +38,7 @@ export function TabBar({ state, descriptors, navigateToTab }: BottomTabBarProps)
             <View>
               <Icon name={ICONS[key] ?? 'discover'} size={t.size.iconTab} color={focused ? t.c.action : t.c.textMuted} fill={focused && key === 'likes' ? t.c.action : undefined} />
               {badge ? (
-                <View style={{ position: 'absolute', top: -2, end: -6, minWidth: 16, height: 16, borderRadius: 8, backgroundColor: t.c.action, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3 }}>
+                <View style={{ position: 'absolute', top: -2, end: -6, minWidth: 16, height: 16, borderRadius: 8, backgroundColor: t.c.accent, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3 }}>
                   <Text variant="small" color="onAction" style={{ fontSize: 10, lineHeight: 14 }} allowFontScaling={false}>
                     {String(badge)}
                   </Text>

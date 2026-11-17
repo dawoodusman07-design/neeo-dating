@@ -101,14 +101,14 @@ export default function Chats() {
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.space[1] }}>
                     <Text variant="bodyStrong">{m.profile.firstName}</Text>
                     {m.profile.verified ? <VerifiedBadge compact /> : null}
-                    {yourTurn ? <Text variant="small" color="brandDeep" style={{ marginStart: t.space[1] }}>{`· ${tr('chats.yourTurn')}`}</Text> : null}
+                    {yourTurn ? <Text variant="small" color="accent" style={{ marginStart: t.space[1] }}>{`· ${tr('chats.yourTurn')}`}</Text> : null}
                   </View>
                   <Text variant="caption" color="textMuted" numberOfLines={1}>{preview(m)}</Text>
                 </View>
                 <View style={{ alignItems: 'flex-end', gap: t.space[1] }}>
                   {m.lastMessage ? <Text variant="small" color="textMuted">{formatTime(m.lastMessage.createdAt)}</Text> : null}
                   {m.unread ? (
-                    <View style={{ minWidth: 20, height: 20, borderRadius: 10, backgroundColor: t.c.action, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 }}>
+                    <View style={{ minWidth: 20, height: 20, borderRadius: 10, backgroundColor: t.c.accent, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 }}>
                       <Text variant="small" color="onAction">{m.unread}</Text>
                     </View>
                   ) : (
