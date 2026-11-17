@@ -16,8 +16,14 @@ export default function PlusIntro() {
   if (membership.data && (isPlusActive(membership.data.status) || membership.data.status === 'pending')) return <Redirect href="/membership" />;
   const free: [IconName, string][] = [
     ['discover', tr('plus.f1')],
-    ['chats', tr('chats.title')],
-    ['photoPrivacy', tr('plus.f2')],
+    ['likes', tr('plus.f2')],
+    ['chats', tr('plus.f3')],
+    ['photoPrivacy', tr('plus.f4')],
+  ];
+  const plus: [IconName, string][] = [
+    ['preferences', tr('plus.f5')],
+    ['save', tr('plus.f6')],
+    ['region', tr('plus.f7')],
   ];
   return (
     <Screen close={() => router.back()} footer={<Button title={tr('plus.compare')} onPress={() => router.push('/plus/compare')} testID="plus-compare" />}>
@@ -36,6 +42,15 @@ export default function PlusIntro() {
             <Icon name={icon} color={t.c.brandDeep} />
             <Text style={{ flex: 1 }}>{label}</Text>
             <Icon name="check" color={t.c.success} />
+          </View>
+        ))}
+      </Card>
+      <Card tone="tint">
+        <Text variant="caption" color="brandDeep">{tr('plus.plus')}</Text>
+        {plus.map(([icon, label]) => (
+          <View key={label} style={{ flexDirection: 'row', gap: t.space[3], alignItems: 'center' }}>
+            <Icon name={icon} color={t.c.brandDeep} />
+            <Text style={{ flex: 1 }}>{label}</Text>
           </View>
         ))}
       </Card>

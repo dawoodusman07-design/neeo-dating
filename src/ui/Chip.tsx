@@ -41,9 +41,10 @@ export function Chip({ label, icon, selected, onPress, disabled, tone = 'default
   if (!onPress) return <View accessible accessibilityLabel={label}>{content()}</View>;
   return (
     <Pressable
-      accessibilityRole="checkbox"
+      accessibilityRole={selected === undefined ? 'button' : 'checkbox'}
       accessibilityLabel={label}
-      accessibilityState={{ checked: !!selected, disabled: !!disabled }}
+      accessibilityState={selected === undefined ? { disabled: !!disabled } : { checked: !!selected, disabled: !!disabled }}
+      aria-checked={selected === undefined ? undefined : !!selected}
       onPress={onPress}
       disabled={disabled}
       hitSlop={6}

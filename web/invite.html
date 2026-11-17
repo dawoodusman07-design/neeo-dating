@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Your Neeo invitation</title><link rel="stylesheet" href="/style.css"></head>
+<body><main>
+<a class="wordmark" href="/">neeo</a>
+<h1 id="title">Your Neeo invitation</h1>
+<p class="muted" id="intro">Checking your invitation…</p>
+<form class="card" id="chaperone" hidden>
+  <h2>Be a chaperone</h2>
+  <p>As a chaperone you can read the chats you’re added to. You can’t send messages, and you can step down at any time.</p>
+  <button type="submit">Accept</button>
+</form>
+<form class="card" id="take" hidden>
+  <h2>Write a Friend’s Take</h2>
+  <label for="author">Your first name</label>
+  <input id="author" autocomplete="given-name" required minlength="2" maxlength="40">
+  <label for="body">What should people know about them? (10–200 characters)</label>
+  <textarea id="body" required minlength="10" maxlength="200" rows="4"></textarea>
+  <p class="muted">They’ll read it first and choose whether to show it on their profile.</p>
+  <button type="submit">Send</button>
+</form>
+<p id="status" role="status" aria-live="polite"></p>
+</main>
+<script type="module">
+// Calls the invite-respond Edge Function. FUNCTIONS_URL is set at deploy time.
+const FUNCTIONS_URL = window.NEEO_FUNCTIONS_URL || 'https://YOUR-PROJECT.functions.supabase.co';
+const token = new URLSearchParams(location.search).get('t') || '';
+const $ = (id) => document.getElementById(id);
+const say = (msg) => { $('status').textContent = msg; };
+const res = await fetch(`${FUNCTIONS_URL}/invite-respond?t=${encodeURIComponent(token)}`).catch(() => null);
+const info = res && res.ok ? await res.json() : null;
+if (!info) { $('intro').textContent = 'This invitation has expired or was already used. Ask for a new link.'; }
+else {
+  $('intro').textContent = info.kind === 'chaperone' ? `${info.firstName} asked you to be their chaperone on Neeo.` : `${info.firstName} asked you to write a few words about them for their Neeo profile.`;
+  $(info.kind === 'chaperone' ? 'chaperone' : 'take').hidden = false;
+}
+const post = async (body) => {
+  const r = await fetch(`${FUNCTIONS_URL}/invite-respond`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ token, ...body }) }).catch(() => null);
+  say(r && r.ok ? 'Done. Thank you — you can close this page.' : 'That didn’t go through. Check your connection and try again.');
+};
+$('chaperone').addEventListener('submit', (e) => { e.preventDefault(); post({ action: 'accept' }); });
+$('take').addEventListener('submit', (e) => { e.preventDefault(); post({ action: 'take', author: $('author').value, body: $('body').value }); });
+</script>
+</body></html>

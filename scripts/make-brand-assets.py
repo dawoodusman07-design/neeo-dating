@@ -5,7 +5,7 @@ from PIL import Image, ImageDraw, ImageFont
 import os
 
 FONT = 'node_modules/@expo-google-fonts/inter/800ExtraBold/Inter_800ExtraBold.ttf'
-ACTION, BRAND_DEEP, BG, WHITE = (189, 40, 88), (116, 49, 91), (255, 250, 253), (255, 255, 255)
+ACTION, BRAND_DEEP, BG, WHITE = (168, 67, 42), (122, 47, 29), (251, 247, 242), (255, 255, 255)  # tokens: action #A8432A, brandDeep #7A2F1D, bg #FBF7F2
 
 def centered_text(img, text, size, fill, dy=0):
     d = ImageDraw.Draw(img)

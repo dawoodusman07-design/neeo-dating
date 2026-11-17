@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTheme } from '@/theme';
 import { Avatar, Button, Card, Icon, ListGroup, ListRow, Screen, Text, TextField, toast } from '@/ui';
 import { api, phoneSchema } from '@/data';
@@ -15,6 +16,7 @@ export default function DateCheckIn() {
   const t = useTheme();
   const { t: tr } = useTranslation();
   const router = useRouter();
+  const qc = useQueryClient();
   const { matchId } = useLocalSearchParams<{ matchId: string }>();
   const match = useMatch(matchId);
   const [place, setPlace] = useState('');
@@ -38,6 +40,7 @@ export default function DateCheckIn() {
     try {
       await api.safety.createCheckIn({ matchId, place: place.trim(), startsAt: startsAt.toISOString(), checkInAt: checkInAt.toISOString(), contact: { name: contactName.trim(), phone: phone.data } });
       if (chaperone) await api.me.update({ chaperoneEnabled: true });
+      await qc.invalidateQueries({ queryKey: ['checkIn', 'active'] });
       toast(tr('checkIn.scheduled', { time: formatTime(checkInAt.toISOString()) }), 'success');
       router.back();
     } finally {
@@ -60,7 +63,7 @@ export default function DateCheckIn() {
           <Text variant="heading">{tr('checkIn.with', { name })}</Text>
         </View>
         <TextField label={tr('checkIn.place')} value={place} onChangeText={setPlace} placeholder="Café on Queen St W" />
-        <TextField label={`${tr('checkIn.when')} (hours from now)`} value={startsIn} onChangeText={(v) => setStartsIn(v.replace(/[^\d.]/g, ''))} keyboardType="decimal-pad" />
+        <TextField label={tr('checkIn.whenHours')} value={startsIn} onChangeText={(v) => setStartsIn(v.replace(/[^\d.]/g, ''))} keyboardType="decimal-pad" />
       </Card>
 
       <ListGroup title={tr('checkIn.contact')}>
@@ -73,7 +76,7 @@ export default function DateCheckIn() {
 
       <ListGroup title={tr('checkIn.checkInAfter')} footer={tr('checkIn.escalate')}>
         {OFFSETS.map((h) => (
-          <ListRow key={h} title={`${h} hour${h > 1 ? 's' : ''}`} selected={after === h} onPress={() => setAfter(h)} />
+          <ListRow key={h} title={tr('checkIn.hours', { count: h })} selected={after === h} onPress={() => setAfter(h)} />
         ))}
       </ListGroup>
 
@@ -86,9 +89,8 @@ export default function DateCheckIn() {
           <ListRow
             key={label}
             title={label}
-            icon={checks[i] ? 'check' : 'dash'}
+            checked={!!checks[i]}
             onPress={() => setChecks((c) => c.map((v, j) => (j === i ? !v : v)))}
-            accessibilityHint={checks[i] ? 'Checked' : 'Not checked'}
           />
         ))}
       </ListGroup>

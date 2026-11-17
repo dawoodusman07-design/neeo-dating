@@ -27,11 +27,11 @@ export function ProfilePhoto({ uri, label, blurred, pending, aspectRatio = 4 / 5
   return (
     <View
       style={[{ aspectRatio, borderRadius: radius ?? t.radius.lg, overflow: 'hidden', backgroundColor: t.c.tint }, style]}
-      accessible
-      accessibilityRole="image"
-      accessibilityLabel={blurred ? `${label}, blurred for privacy` : pending ? `${label}, waiting for review` : label}
     >
+      {/* The alt text lives on the image itself, so overlay controls (children) are never nested inside an image role. */}
       <Image
+        accessible
+        accessibilityLabel={blurred ? `${label}, blurred for privacy` : pending ? `${label}, waiting for review` : label}
         source={{ uri }}
         style={{ width: '100%', height: '100%' }}
         contentFit="cover"

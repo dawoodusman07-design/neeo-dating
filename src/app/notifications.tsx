@@ -13,7 +13,7 @@ const ICON: Record<InboxItem['kind'], IconName> = {
   appeal_outcome: 'report',
   support_reply: 'help',
   new_match: 'chats',
-  new_like: 'likes',
+  new_like: 'likes', check_in: 'safety', chaperone_accepted: 'chaperone', friends_take: 'you',
 };
 
 /** Notification inbox (from name only): report outcomes, photo request decisions, appeal outcomes, support replies. */

@@ -234,4 +234,152 @@ select pg_temp.as_user(:bob);
 select pg_temp.expect(exists (select 1 from inbox_items where kind = 'appeal_outcome'), 'appeal outcome is delivered to the appellant');
 reset role;
 
+-- ---- Plus model: enforced server-side; free users can turn Plus filters off, never on ----
+update preferences set genders = '{man}', age_min = 25, age_max = 40, max_km = 500 where user_id = :carol;
+update profiles set city = 'Lahore' where id = :alice;
+do $$ begin
+  perform set_config('request.jwt.claim.sub', 'cccccccc-0000-0000-0000-000000000003', false);
+  set role authenticated;
+  begin
+    update public.preferences set verified_only = true where user_id = auth.uid();
+    raise exception 'FAIL: free user turned on an advanced filter';
+  exception when insufficient_privilege then raise notice 'ok - free users cannot turn on advanced filters';
+  end;
+  begin
+    update public.preferences set travel_city = 'Lahore' where user_id = auth.uid();
+    raise exception 'FAIL: free user turned on travel mode';
+  exception when insufficient_privilege then raise notice 'ok - free users cannot turn on travel mode';
+  end;
+  begin
+    update public.preferences set presets = '[{"name":"Weekend"}]' where user_id = auth.uid();
+    raise exception 'FAIL: free user saved a preset';
+  exception when insufficient_privilege then raise notice 'ok - free users cannot save preference presets';
+  end;
+  reset role;
+end $$;
+select pg_temp.as_user(:alice);
+insert into likes (from_id, to_id, comment) values (:alice, :carol, 'Your Sunday prompt!');
+reset role;
+select pg_temp.as_user(:carol);
+select pg_temp.expect(not has_plus(:carol), 'control: Carol has no Plus');
+select pg_temp.expect((select comment from likes where to_id = :carol and from_id = :alice) = 'Your Sunday prompt!', 'free user sees who liked them, with the comment');
+reset role;
+insert into entitlements (user_id, is_plus, expires_at) values (:carol, true, now() + interval '30 days');
+select pg_temp.as_user(:carol);
+update preferences set verified_only = true where user_id = :carol;
+select pg_temp.expect((select verified_only from preferences) = true, 'Plus member can turn on advanced filters');
+select pg_temp.expect(not exists (select 1 from daily_introductions(8) where id = :alice), 'advanced filter (verified only) hides unverified Alice');
+update preferences set verified_only = false, travel_city = 'Lahore' where user_id = :carol;
+select pg_temp.expect(exists (select 1 from daily_introductions(8) where id = :alice), 'travel mode introduces people in the chosen city');
+update preferences set travel_city = 'Karachi' where user_id = :carol;
+select pg_temp.expect(not exists (select 1 from daily_introductions(8) where id = :alice), 'travel mode excludes people outside the chosen city');
+update preferences set travel_city = null, verified_only = true, presets = '[{"name":"Weekend"}]' where user_id = :carol;
+select pg_temp.expect(jsonb_array_length((select presets from preferences)) = 1, 'Plus member can save a preset');
+reset role;
+update entitlements set expires_at = now() - interval '1 day' where user_id = :carol;
+select pg_temp.as_user(:carol);
+select pg_temp.expect(not has_plus(:carol), 'expired entitlement is not Plus');
+select pg_temp.expect(exists (select 1 from daily_introductions(8) where id = :alice), 'after Plus ends, stored Plus filters are ignored');
+update preferences set verified_only = false, presets = '[]' where user_id = :carol;
+select pg_temp.expect((select verified_only from preferences) = false, 'after Plus ends, the user can still turn filters off and delete presets');
+reset role;
+
+-- ---- Saved profiles, date plans and private notes: owner only ----
+select pg_temp.as_user(:carol);
+insert into saved_profiles (user_id, profile_id) values (:carol, :alice);
+insert into profile_notes (user_id, profile_id, body) values (:carol, :alice, 'Loves Rouge Park');
+insert into date_plans (user_id, partner_name, idea) values (:carol, 'Alice', 'Coffee and a walk');
+select pg_temp.expect((select count(*) from saved_profiles) = 1 and (select count(*) from profile_notes) = 1 and (select count(*) from date_plans) = 1, 'owner reads their saved profiles, notes and plans');
+reset role;
+select pg_temp.as_user(:alice);
+select pg_temp.expect((select count(*) from saved_profiles) = 0, 'saved profiles are private (Alice cannot see that Carol saved her)');
+select pg_temp.expect((select count(*) from profile_notes) = 0, 'private notes are private (the subject cannot read them)');
+select pg_temp.expect((select count(*) from date_plans) = 0, 'date plans are private');
+reset role;
+do $$ declare mid uuid; begin
+  select id into mid from matches limit 1;
+  perform set_config('request.jwt.claim.sub', 'cccccccc-0000-0000-0000-000000000003', false);
+  set role authenticated;
+  begin
+    insert into public.saved_profiles (user_id, profile_id) values (auth.uid(), 'bbbbbbbb-0000-0000-0000-000000000002');
+    raise exception 'FAIL: saved a suspended/invisible profile';
+  exception when insufficient_privilege then raise notice 'ok - cannot save a profile you cannot see';
+  end;
+  begin
+    insert into public.date_plans (user_id, match_id, partner_name, idea) values (auth.uid(), mid, 'Bob', 'Snoop');
+    raise exception 'FAIL: attached a plan to someone else''s match';
+  exception when insufficient_privilege then raise notice 'ok - date plans can only reference your own matches';
+  end;
+  begin
+    insert into public.profile_notes (user_id, profile_id, body) values ('aaaaaaaa-0000-0000-0000-000000000001', 'cccccccc-0000-0000-0000-000000000003', 'forged');
+    raise exception 'FAIL: wrote a note as someone else';
+  exception when insufficient_privilege then raise notice 'ok - cannot write notes as another user';
+  end;
+  reset role;
+end $$;
+
+-- ---- QA pass: invites, Friend's Take, check-in help ----
+select pg_temp.as_user(:carol);
+insert into invites (user_id, kind, name, phone) values (:carol, 'chaperone', 'Auntie Sara', '+14165550100');
+insert into invites (user_id, kind, name) values (:carol, 'friends_take', 'Hina');
+select pg_temp.expect((select count(*) from invites) = 2, 'owner reads their own invites');
+select pg_temp.expect((select count(*) from invites where status = 'sent') = 2, 'new invites start as sent');
+update invites set status = 'revoked' where kind = 'chaperone';
+select pg_temp.expect((select count(*) from invites where status = 'revoked') = 1, 'owner can revoke an invite');
+reset role;
+select pg_temp.as_user(:alice);
+select pg_temp.expect((select count(*) from invites) = 0, 'invites (and the chaperone''s phone) are private to the owner');
+reset role;
+-- the friend's answer arrives through the Edge Function (service role)
+insert into friends_takes (user_id, author_name, body, invite_id)
+  select user_id, name, 'Kind and funny', id from invites where kind = 'friends_take';
+do $$ begin
+  perform set_config('request.jwt.claim.sub', 'cccccccc-0000-0000-0000-000000000003', false);
+  set role authenticated;
+  begin
+    update public.invites set status = 'accepted' where kind = 'friends_take';
+    raise exception 'FAIL: owner accepted their own invite';
+  exception when insufficient_privilege or check_violation then raise notice 'ok - only the invited person can accept an invite';
+  end;
+  begin
+    insert into public.invites (user_id, kind, name, status) values (auth.uid(), 'chaperone', 'Fake', 'accepted');
+    raise exception 'FAIL: created an already-accepted invite';
+  exception when insufficient_privilege or check_violation then raise notice 'ok - cannot create an accepted invite';
+  end;
+  begin
+    insert into public.friends_takes (user_id, author_name, body, approved) values (auth.uid(), 'Me pretending', 'Best person ever', true);
+    raise exception 'FAIL: wrote my own Friend''s Take';
+  exception when insufficient_privilege then raise notice 'ok - a Friend''s Take cannot be written by the profile owner';
+  end;
+  begin
+    update public.friends_takes set body = 'edited' ;
+    raise exception 'FAIL: edited a friend''s words';
+  exception when insufficient_privilege then raise notice 'ok - the owner cannot edit what a friend wrote';
+  end;
+  reset role;
+end $$;
+select pg_temp.as_user(:carol);
+update friends_takes set approved = true;
+select pg_temp.expect((select count(*) from friends_takes where approved) = 1, 'owner approves a Friend''s Take');
+reset role;
+select pg_temp.as_user(:alice);
+select pg_temp.expect((select count(*) from friends_takes where user_id = :carol) = 1, 'an approved Friend''s Take is visible to people who can see the profile');
+reset role;
+select pg_temp.as_user(:carol);
+insert into check_ins (user_id, place, starts_at, check_in_at, contact_name, contact_phone)
+  values (:carol, 'Cafe', now(), now() + interval '2 hours', 'Sara', '+14165550100');
+update check_ins set status = 'help_requested' where place = 'Cafe';
+select pg_temp.expect((select status::text from check_ins where place = 'Cafe') = 'help_requested', 'owner can ask for help on their check-in');
+reset role;
+do $$ begin
+  perform set_config('request.jwt.claim.sub', 'cccccccc-0000-0000-0000-000000000003', false);
+  set role authenticated;
+  begin
+    update public.check_ins set status = 'escalated' where place = 'Cafe';
+    raise exception 'FAIL: user marked their check-in escalated';
+  exception when insufficient_privilege then raise notice 'ok - only the escalation job marks a check-in escalated';
+  end;
+  reset role;
+end $$;
+
 \echo 'ALL RLS TESTS PASSED'

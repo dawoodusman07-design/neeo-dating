@@ -24,6 +24,7 @@ const BASE = `http://localhost:${PORT}`;
     else await d.accept();
   });
   const tid = (id) => page.locator(`[data-testid="${id}"]`).first();
+  const vtid = (id) => page.locator(`[data-testid="${id}"]`).filter({ visible: true }).first();
   const see = (text) => page.getByText(text, { exact: false }).filter({ visible: true }).first().waitFor({ state: 'visible', timeout: 8000 });
   const button = (name) => page.getByRole('button', { name }).filter({ visible: true }).first().click();
   const tab = (name) => page.getByRole('tab', { name: new RegExp('^' + name) }).click();
@@ -84,6 +85,22 @@ const BASE = `http://localhost:${PORT}`;
     await see('Maya, 28');
     step('signed in → Discover');
 
+    // ---- likes are free: names and comments visible without Plus ----
+    await tab('Likes');
+    await see('Lena, 29');
+    await see('What are you reading right now?');
+    step('likes: free user sees who liked them, with the comment');
+
+    // ---- Plus filters are locked for free users ----
+    await tab('You');
+    await button(/^Your preferences/);
+    await see('Travel mode');
+    for (const name of ['Only show verified profiles', 'Only show profiles with a voice prompt', 'Travel mode']) {
+      assert.equal(await page.getByRole('switch', { name: new RegExp('^' + name) }).first().getAttribute('aria-disabled'), 'true', `${name} is locked without Plus`);
+    }
+    step('preferences: advanced filters and travel mode locked without Plus');
+    await backToTabs();
+
     // ---- restore with nothing to restore (38 → 40) ----
     await tab('You');
     await button(/^Settings/);
@@ -115,6 +132,21 @@ const BASE = `http://localhost:${PORT}`;
     await button(/^Explore Plus/);
     await see('You are on Neeo Plus');
     step('membership: "You are on Neeo Plus"');
+
+    // ---- with Plus: travel mode + advanced filter save ----
+    await backToTabs();
+    await tab('You');
+    await button(/^Your preferences/);
+    await page.getByRole('switch', { name: /^Travel mode/ }).first().click();
+    await tid('travel-city').fill('Lahore');
+    await page.getByRole('switch', { name: /^Only show verified profiles/ }).first().click();
+    await tid('prefs-save').click();
+    await page.getByRole('tablist').waitFor({ timeout: 8000 });
+    await tab('You');
+    await button(/^Your preferences/);
+    assert.equal(await tid('travel-city').inputValue(), 'Lahore', 'travel city saved');
+    step('preferences: Plus member saves travel mode + verified-only filter');
+    await backToTabs();
 
     // ---- membership states as RevenueCat reports them (43, 44, 45) ----
     for (const [id, text] of [
@@ -180,9 +212,73 @@ const BASE = `http://localhost:${PORT}`;
     assert.equal(await tid('chat-row-Maya').count(), 0, 'blocked match removed from chats');
     step('blocked user gone from chats');
 
+    // ---- date check-in → "Are you okay?" → I'm okay (QA pass) ----
+    await vtid('chat-row-Ayesha').click();
+    await vtid('chat-safety').click();
+    await button(/date check-in/i);
+    await page.getByRole('textbox', { name: 'Place', exact: true }).fill('Café on Queen St W');
+    await page.getByRole('textbox', { name: 'Their first name' }).fill('Sara');
+    await page.getByRole('textbox', { name: 'Their phone number' }).fill('+14165550100');
+    await vtid('checkin-schedule').click();
+    await backToTabs();
+    await tab('Chats');
+    await vtid('checkin-now').click();
+    await see('Are you okay?');
+    await vtid('checkin-ok').click();
+    await see('Glad you’re okay');
+    step('date check-in → prompt → "I’m okay"');
+    await button(/^Done/);
+    await page.waitForTimeout(500);
+
+    // ---- Friend's Take: invite → received → shown (QA pass) ----
+    await tab('You');
+    await vtid('friends-take-row').click();
+    await vtid('take-friend-name').fill('Hina');
+    await vtid('take-invite').click();
+    await vtid('take-show').waitFor({ timeout: 10000 });
+    await vtid('take-show').click();
+    await see('Shown on your profile');
+    step('Friend’s Take: invite → received → shown on profile');
+    await backToTabs();
+
+    // ---- chaperone: invite → accepted (QA pass) ----
+    await tab('You');
+    await button(/^Safety/);
+    await vtid('chaperone-row').click();
+    await vtid('chaperone-name').fill('Sara');
+    await vtid('chaperone-phone').fill('+14165550100');
+    await vtid('chaperone-invite').click();
+    await see('Invitation sent');
+    await vtid('chaperone-accepted').waitFor({ timeout: 10000 });
+    step('chaperone: invite → accepted');
+    await backToTabs();
+
+    // ---- You → Help and what's new (QA pass) ----
+    await tab('You');
+    await vtid('help-row').click();
+    await vtid('whats-new').click();
+    await see('What’s new');
+    step('You → Help and what’s new');
+    await backToTabs();
+
+    // ---- Urdu: switch → RTL + Urdu strings → back to English (QA pass) ----
+    await tab('You');
+    await button(/^Settings/);
+    await button(/^Region & language/);
+    await page.getByRole('radio', { name: /^Urdu/ }).click();
+    await see('علاقہ اور زبان');
+    assert.equal(await page.evaluate(() => document.documentElement.dir), 'rtl', 'Urdu sets right-to-left');
+    await page.getByRole('radio', { name: /^English/ }).click();
+    await see('Region & language');
+    assert.equal(await page.evaluate(() => document.documentElement.dir), 'ltr', 'English restores left-to-right');
+    step('Urdu switch: RTL + Urdu strings, then back to English');
+    await backToTabs();
+    await tab('Chats');
+    await page.waitForTimeout(500);
+
     // ---- end a connection (29) → listed under Ended connections ----
-    await tid('chat-row-Ayesha').click();
-    await tid('chat-safety').click();
+    await vtid('chat-row-Ayesha').click();
+    await vtid('chat-safety').click();
     await button('End connection');
     await tid('unmatch-confirm').click();
     await see('Connection ended');

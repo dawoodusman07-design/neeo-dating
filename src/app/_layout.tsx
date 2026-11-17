@@ -1,5 +1,6 @@
-import '@/i18n';
+import '@/config'; // validates build configuration first (fails closed outside development)
 import React, { useEffect, useMemo } from 'react';
+import { Platform, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Stack, SplashScreen } from 'expo-router';
 import * as SystemUI from 'expo-system-ui';
@@ -18,6 +19,8 @@ import { ThemeProvider, useTheme } from '@/theme';
 import { ToastHost } from '@/ui';
 import { useSession } from '@/stores/session';
 import { useBootSession } from '@/features/useBootSession';
+import { useSettings } from '@/stores/settings';
+import { applyLocale, RTL_LANGS } from '@/i18n';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -43,7 +46,13 @@ export default function RootLayout() {
 function RootStack({ ready }: { ready: boolean }) {
   const t = useTheme();
   const status = useSession((s) => s.status);
+  const locale = useSettings((s) => s.locale);
   useBootSession();
+
+  // Restore the saved language on launch (and apply changes made in Region & language).
+  useEffect(() => {
+    applyLocale(locale);
+  }, [locale]);
 
   useEffect(() => {
     SystemUI.setBackgroundColorAsync(t.c.bg).catch(() => {});
@@ -57,7 +66,7 @@ function RootStack({ ready }: { ready: boolean }) {
 
   const signedIn = status === 'active' || status === 'paused' || status === 'underReview';
   return (
-    <>
+    <WebColumn>
       <StatusBar style={t.scheme === 'dark' ? 'light' : 'dark'} />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: t.c.bg } }}>
         <Stack.Protected guard={status === 'signedOut'}>
@@ -81,6 +90,7 @@ function RootStack({ ready }: { ready: boolean }) {
           <Stack.Screen name="photo-request/[id]" options={{ presentation: 'modal' }} />
           <Stack.Screen name="share-photos/[matchId]" options={{ presentation: 'modal' }} />
           <Stack.Screen name="check-in/[matchId]" />
+          <Stack.Screen name="check-in-prompt/[id]" />
           <Stack.Screen name="settings" />
           <Stack.Screen name="support" />
           <Stack.Screen name="notifications" />
@@ -96,6 +106,46 @@ function RootStack({ ready }: { ready: boolean }) {
         <Stack.Screen name="index" />
       </Stack>
       <ToastHost />
-    </>
+    </WebColumn>
+  );
+}
+
+/** On web, keep the phone layout: a centred column (max 480px) with `bg` outside it. Native: no-op. */
+function WebColumn({ children }: { children: React.ReactNode }) {
+  const t = useTheme();
+  const locale = useSettings((s) => s.locale);
+  // Keyboard focus ring in the theme's focus colour (the browser default is invisible on the dark theme). WCAG 2.4.7.
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof document === 'undefined') return;
+    let el = document.getElementById('neeo-focus') as HTMLStyleElement | null;
+    if (!el) {
+      el = document.createElement('style');
+      el.id = 'neeo-focus';
+      document.head.appendChild(el);
+    }
+    // Text inputs already draw a 2px focus-colour border on their field, so they skip the outline (no double ring).
+    el.textContent = `:focus-visible{outline:3px solid ${t.c.focus} !important;outline-offset:2px !important;border-radius:6px}input:focus-visible,textarea:focus-visible{outline:none !important}`;
+  }, [t.c.focus]);
+  if (Platform.OS !== 'web') return <>{children}</>;
+  const dir = RTL_LANGS.has(locale) ? 'rtl' : 'ltr';
+  return (
+    <View style={{ flex: 1, backgroundColor: t.c.tint, alignItems: 'center' }}>
+      <View
+        // react-native-web resolves start/end styles from the nearest dir/lang
+        {...({ dir, lang: locale } as object)}
+        style={{
+          flex: 1,
+          width: '100%',
+          maxWidth: t.size.appMaxWidth,
+          backgroundColor: t.c.bg,
+          borderStartWidth: 1,
+          borderEndWidth: 1,
+          borderColor: t.c.border,
+          overflow: 'hidden',
+        }}
+      >
+        {children}
+      </View>
+    </View>
   );
 }

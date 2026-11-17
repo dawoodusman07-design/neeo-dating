@@ -1,17 +1,20 @@
 import React from 'react';
 import { Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { useTheme } from '@/theme';
 import { Icon } from './Icon';
 import type { IconName } from './icons';
 import { Text } from './Text';
+import { contentName, SrOnly } from './a11y';
 
 const ICONS: Record<string, IconName> = { discover: 'discover', likes: 'likes', chats: 'chats', you: 'you' };
 
 export function TabBar({ state, descriptors, navigateToTab }: BottomTabBarProps) {
   const t = useTheme();
   const insets = useSafeAreaInsets();
+  const { t: tr } = useTranslation();
   return (
     <View
       accessibilityRole="tablist"
@@ -31,14 +34,15 @@ export function TabBar({ state, descriptors, navigateToTab }: BottomTabBarProps)
             key={route.key}
             accessibilityRole="tab"
             accessibilityState={{ selected: focused }}
-            accessibilityLabel={badge ? `${label}, ${badge} new` : label}
+            {...contentName(badge ? `${label}, ${tr('a11y.unread', { count: Number(badge) })}` : label)}
+            aria-selected={focused}
             onPress={onPress}
             style={{ flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: 52, gap: 2 }}
           >
             <View>
               <Icon name={ICONS[key] ?? 'discover'} size={t.size.iconTab} color={focused ? t.c.action : t.c.textMuted} fill={focused && key === 'likes' ? t.c.action : undefined} />
               {badge ? (
-                <View style={{ position: 'absolute', top: -2, end: -6, minWidth: 16, height: 16, borderRadius: 8, backgroundColor: t.c.action, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3 }}>
+                <View {...({ 'aria-hidden': true } as object)} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ position: 'absolute', top: -2, end: -6, minWidth: 16, height: 16, borderRadius: 8, backgroundColor: t.c.accent, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3 }}>
                   <Text variant="small" color="onAction" style={{ fontSize: 10, lineHeight: 14 }} allowFontScaling={false}>
                     {String(badge)}
                   </Text>
@@ -48,6 +52,7 @@ export function TabBar({ state, descriptors, navigateToTab }: BottomTabBarProps)
             <Text variant="small" color={focused ? 'action' : 'textMuted'} style={{ fontFamily: focused ? t.font.semibold : t.font.medium }}>
               {label}
             </Text>
+            {badge ? <SrOnly>{`, ${tr('a11y.unread', { count: Number(badge) })}`}</SrOnly> : null}
           </Pressable>
         );
       })}

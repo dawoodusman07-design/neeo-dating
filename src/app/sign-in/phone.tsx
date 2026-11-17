@@ -24,7 +24,7 @@ export default function Phone() {
       const err = e as ApiError;
       if (err.code === 'otp_locked') router.replace({ pathname: '/sign-in/locked', params: { sec: String(err.retryAfterSec ?? 900) } });
       else if (err.code === 'rate_limited') phone.setServerError(t('auth.rateLimited', { min: Math.ceil((err.retryAfterSec ?? 600) / 60) }));
-      else phone.setServerError(err.code === 'offline' ? t('states.offline.body') : t('common.genericError'));
+      else phone.setServerError(err.code === 'offline' ? t('states.loadFailed.body') : t('common.genericError'));
     } finally {
       setLoading(false);
     }

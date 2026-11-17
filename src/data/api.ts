@@ -1,6 +1,8 @@
 import type {
   BlockedAccount,
   CheckIn,
+  Invite,
+  MyFriendsTake,
   DateProposal,
   Introductions,
   Like,
@@ -12,6 +14,9 @@ import type {
   AccountReview,
   InboxItem,
   Preferences,
+  PreferencePreset,
+  SavedProfile,
+  DatePlan,
   Gender,
   SupportTicket,
   SupportTopic,
@@ -55,7 +60,13 @@ export interface NeeoApi {
     reorderPhotos(ids: string[]): Promise<void>;
     removePhoto(id: string): Promise<void>;
     preferences(): Promise<Preferences>;
+    /** Rejects with ApiError('plus_required') when turning on a Plus filter without Plus. */
     setPreferences(p: Preferences): Promise<void>;
+    presets(): Promise<PreferencePreset[]>;
+    /** Plus only (server-enforced). */
+    savePreset(name: string, prefs: Preferences): Promise<PreferencePreset>;
+    /** Always allowed, also after Plus ends. */
+    deletePreset(id: string): Promise<void>;
     review(): Promise<AccountReview>;
     pause(paused: boolean): Promise<void>;
     exportData(): Promise<{ status: 'preparing' | 'ready'; url?: string; expiresAt?: string }>;
@@ -96,6 +107,10 @@ export interface NeeoApi {
     report(profileId: string, reason: ReportReason, details?: string, messageId?: string): Promise<{ reportId: string }>;
     createCheckIn(input: { matchId: string; place: string; startsAt: string; checkInAt: string; contact: TrustedContact }): Promise<CheckIn>;
     confirmCheckIn(id: string): Promise<void>;
+    /** "I need help": alert the trusted contact now (the escalation job sends the SMS). */
+    requestHelp(id: string): Promise<void>;
+    /** The check-in that is scheduled and not yet answered, if any. */
+    activeCheckIn(): Promise<CheckIn | null>;
     appeal(text: string): Promise<Appeal>;
     appeals(): Promise<Appeal[]>;
   };
@@ -113,8 +128,33 @@ export interface NeeoApi {
     get(id: string): Promise<SupportTicket>;
     reply(id: string, body: string): Promise<SupportTicket>;
   };
+  saved: {
+    profiles(): Promise<SavedProfile[]>;
+    saveProfile(profileId: string): Promise<void>;
+    removeProfile(profileId: string): Promise<void>;
+    plans(): Promise<DatePlan[]>;
+    savePlan(plan: Omit<DatePlan, 'savedAt'>): Promise<void>;
+    removePlan(id: string): Promise<void>;
+  };
+  notes: {
+    /** Private note about a profile; only its author can read it. */
+    get(profileId: string): Promise<string>;
+    set(profileId: string, body: string): Promise<void>;
+  };
   inbox: {
     list(): Promise<InboxItem[]>;
     markAllRead(): Promise<void>;
+  };
+  /** Invitations to people outside Neeo (chaperone, Friend's Take). Owner-only. */
+  invites: {
+    list(kind: Invite['kind']): Promise<Invite[]>;
+    create(kind: Invite['kind'], input: { name: string; phone?: string }): Promise<Invite>;
+    revoke(id: string): Promise<void>;
+  };
+  friendsTakes: {
+    /** All takes written about me, approved or not (only I can see unapproved ones). */
+    mine(): Promise<MyFriendsTake[]>;
+    setApproved(id: string, approved: boolean): Promise<void>;
+    remove(id: string): Promise<void>;
   };
 }

@@ -65,7 +65,7 @@ export default function Photos() {
         {photos.map((p, i) => (
           <View key={p.id} style={{ width: '47%', gap: t.space[1] }}>
             <Pressable disabled={p.status !== 'failed'} onPress={() => upload(p)} accessibilityRole={p.status === 'failed' ? 'button' : undefined} accessibilityLabel={p.status === 'failed' ? tr('onboarding.photoFailed') : undefined}>
-              <ProfilePhoto uri={p.uri} label={`Photo ${i + 1}`} pending={p.status === 'pending' || p.status === 'uploading'} radius={t.radius.md} />
+              <ProfilePhoto uri={p.uri} label={tr('a11y.yourPhoto', { n: i + 1, total: photos.length })} pending={p.status === 'pending' || p.status === 'uploading'} radius={t.radius.md} />
             </Pressable>
             {p.status === 'failed' || p.status === 'rejected' ? (
               <View style={{ flexDirection: 'row', gap: t.space[1], alignItems: 'center' }}>
@@ -76,9 +76,9 @@ export default function Photos() {
               </View>
             ) : null}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <IconButton icon="back" label={`${tr('onboarding.moveEarlier')}, photo ${i + 1}`} disabled={i === 0} onPress={() => move(i, -1)} size={36} />
+              <IconButton icon="back" label={`${tr('onboarding.moveEarlier')}, ${tr('a11y.photoN', { n: i + 1 })}`} disabled={i === 0} onPress={() => move(i, -1)} size={36} />
               <IconButton icon="delete" label={`${tr('onboarding.removePhoto')} ${i + 1}`} onPress={() => setPhotos((ps) => ps.filter((x) => x.id !== p.id))} size={36} />
-              <IconButton icon="chevron" label={`${tr('onboarding.moveLater')}, photo ${i + 1}`} disabled={i === photos.length - 1} onPress={() => move(i, 1)} size={36} />
+              <IconButton icon="chevron" label={`${tr('onboarding.moveLater')}, ${tr('a11y.photoN', { n: i + 1 })}`} disabled={i === photos.length - 1} onPress={() => move(i, 1)} size={36} />
             </View>
           </View>
         ))}

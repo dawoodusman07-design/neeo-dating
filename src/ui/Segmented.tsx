@@ -16,10 +16,11 @@ export function Segmented<K extends string>({ options, value, onChange }: Props<
             key={o.key}
             accessibilityRole="tab"
             accessibilityState={{ selected }}
+            aria-selected={selected}
             onPress={() => onChange(o.key)}
-            style={{ flex: 1, minHeight: 40, borderRadius: t.radius.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: selected ? t.c.surface : 'transparent' }}
+            style={{ flex: 1, minHeight: t.size.hit, borderRadius: t.radius.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: selected ? t.c.surface : 'transparent' }}
           >
-            <Text variant="caption" color={selected ? 'text' : 'textMuted'}>
+            <Text variant="caption" color={selected ? 'text' : 'textMuted'} style={selected ? { fontFamily: t.font.semibold } : undefined}>
               {o.label}
             </Text>
           </Pressable>

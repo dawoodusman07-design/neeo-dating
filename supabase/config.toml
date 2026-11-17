@@ -12,10 +12,9 @@ max_frequency = "30s"
 otp_length = 6
 otp_expiry = 300
 
-# Reviewer / demo account: a single fixed test number with a fixed code.
-# Only this number bypasses SMS. Remove or rotate after review.
-[auth.sms.test_otp]
-15555550100 = "123456"
+# App Review test number / code: NEVER committed here. Set it only in the hosted
+# Supabase dashboard (Authentication → Providers → Phone → Test phone numbers),
+# rotate it after each review, then remove it. See README → "App Review test account".
 
 [storage]
 file_size_limit = "10MiB"

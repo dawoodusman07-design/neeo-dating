@@ -38,7 +38,6 @@ export default function Conversation() {
   const aiOn = useSettings((s) => s.aiAssist);
   const draft = useLocal((s) => s.drafts[id] ?? '');
   const setDraft = useLocal((s) => s.setDraft);
-  const savePlan = useLocal((s) => s.savePlan);
   const [text, setTextState] = useState(draft);
   const setText = (v: string) => {
     setTextState(v);
@@ -122,7 +121,7 @@ export default function Conversation() {
       return;
     }
     const { granted } = await requestRecordingPermissionsAsync();
-    if (!granted) return toast('Microphone access is off. You can turn it on in Settings.', 'error');
+    if (!granted) return toast(tr('onboarding.micDenied'), 'error');
     await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
     await recorder.prepareToRecordAsync();
     recorder.record();
@@ -145,7 +144,7 @@ export default function Conversation() {
           </View>
           <Text variant="small" color="textMuted">
             {matchedToday ? tr('chat.matchedToday') : tr('chat.matchedOn', { date: formatDate(match.data.matchedAt) })} ·{' '}
-            <Text variant="small" color="action" accessibilityRole="link" onPress={() => router.push({ pathname: '/profile/[id]', params: { id: p.id, matchId: id } })}>
+            <Text variant="small" color="action" accessibilityRole="link" style={{ textDecorationLine: 'underline' }} onPress={() => router.push({ pathname: '/profile/[id]', params: { id: p.id, matchId: id } })}>
               {tr('chat.viewProfile')}
             </Text>
           </Text>
@@ -228,8 +227,14 @@ export default function Conversation() {
               onReport={() => report(item.m.id)}
               onSaveDate={() => {
                 if (!item.m.dateProposal) return;
-                savePlan({ ...item.m.dateProposal, id: item.m.id, matchId: id, name: p.firstName, savedAt: new Date().toISOString() });
-                toast(tr('chat.dateSaved'), 'success');
+                const d = item.m.dateProposal;
+                api.saved
+                  .savePlan({ id: item.m.id, matchId: id, name: p.firstName, idea: d.idea, when: d.when, place: d.place })
+                  .then(() => {
+                    qc.invalidateQueries({ queryKey: ['saved', 'plans'] });
+                    toast(tr('chat.dateSaved'), 'success');
+                  })
+                  .catch(() => toast(tr('common.genericError'), 'error'));
               }}
               onRespondDate={async (status) => {
                 if (status === 'counter') return setPropose(true);

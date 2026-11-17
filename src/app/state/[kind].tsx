@@ -37,6 +37,8 @@ const ICONS: Record<string, IconName> = {
   'photos-shared': 'show',
   'access-revoked': 'hide',
   'reauth-failed': 'photoPrivacy',
+  'checkin-safe': 'check',
+  'checkin-alert-sent': 'safety',
 };
 const ERRORS = new Set(['purchase-failed', 'billing-issue', 'offline', 'upload-failed', 'suspended', 'export-expired', 'reauth-failed']);
 
@@ -106,6 +108,9 @@ export default function StateScreen() {
         setStatus('active');
         await qc.invalidateQueries({ queryKey: ['me'] });
         return router.replace('/discover');
+      case 'checkin-safe':
+      case 'checkin-alert-sent':
+        return router.replace('/chats');
       case 'reauth-failed':
         return router.dismissTo('/settings/account');
       default:

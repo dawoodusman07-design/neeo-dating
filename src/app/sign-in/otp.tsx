@@ -6,7 +6,7 @@ import { useTheme } from '@/theme';
 import { api, ApiError, otpSchema } from '@/data';
 import { useSession } from '@/stores/session';
 import { purchases } from '@/services/purchases';
-import { Button, Card, Icon, Screen, Text, TextField, fromSchema, toast, useField } from '@/ui';
+import { Button, Card, FieldError, Icon, Screen, Text, TextField, fromSchema, toast, useField } from '@/ui';
 
 export default function Otp() {
   const t = useTheme();
@@ -109,11 +109,7 @@ export default function Otp() {
       ) : (
         <Button title={tr('auth.resend')} variant="text" fullWidth={false} onPress={resendCode} style={{ alignSelf: 'flex-start' }} testID="resend-code" />
       )}
-      {resendError ? (
-        <Text variant="caption" color="danger" accessibilityLiveRegion="polite">
-          {resendError}
-        </Text>
-      ) : null}
+      <FieldError message={resendError} />
       <Button title={tr('auth.changeNumber')} variant="text" fullWidth={false} onPress={() => router.back()} style={{ alignSelf: 'flex-start' }} />
     </Screen>
   );

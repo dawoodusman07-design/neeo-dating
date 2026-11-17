@@ -10,6 +10,7 @@
  */
 import { Linking, Platform } from 'react-native';
 import Purchases, { type CustomerInfo, type PurchasesPackage } from 'react-native-purchases';
+import { runtimeConfig } from '@/config';
 
 export const ENTITLEMENT = 'plus';
 
@@ -85,10 +86,7 @@ export function membershipFromEntitlement(
   return { status: 'active', ...base };
 }
 
-const key = Platform.select({
-  ios: process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY,
-  android: process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY,
-});
+const key = runtimeConfig.revenueCatKey;
 
 class RevenueCatService implements PurchaseService {
   readonly isTestStore = false;
@@ -222,4 +220,11 @@ export class MockPurchaseService implements PurchaseService {
   }
 }
 
-export const purchases: PurchaseService = key ? new RevenueCatService() : new MockPurchaseService();
+function createPurchases(): PurchaseService {
+  if (key) return new RevenueCatService();
+  // resolveRuntimeConfig already refuses preview/production without a key; this is a second lock.
+  if (!runtimeConfig.allowMocks) throw new Error('Mock store is development-only');
+  return new MockPurchaseService();
+}
+
+export const purchases: PurchaseService = createPurchases();

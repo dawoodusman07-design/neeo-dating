@@ -1,3 +1,4 @@
+import { links } from '@/lib/links';
 import type { NeeoApi } from './api';
 import { seedProfiles } from './seed';
 import {
@@ -14,9 +15,12 @@ import {
   type InboxItem,
   type Preferences,
   type SupportTicket,
-} from './types';
+  type PreferencePreset,
+  type DatePlan, Invite, MyFriendsTake } from './types';
 import { uid } from '@/lib/id';
 import { checkSync } from '@/services/textModeration';
+import { completeness } from './completeness';
+import { isPlusActive, purchases } from '@/services/purchases';
 
 export const MOCK_OTP = '123456';
 /** Mock-only: signing in with this number skips onboarding (store screenshots, demos). */
@@ -24,7 +28,28 @@ export const DEMO_ONBOARDED_PHONE = '+15555550199';
 export const DAILY_LIMIT = 8;
 const MAX_ATTEMPTS = 5;
 
-const delay = (ms = 250) => new Promise((r) => setTimeout(r, ms));
+/** Dev menu: simulate a slow or missing connection (mock only). */
+export const mockNetwork = { slowMs: 0, offline: false };
+const delay = async (ms = 250) => {
+  if (mockNetwork.offline) throw new ApiError('offline', 'You’re offline');
+  await new Promise((r) => setTimeout(r, ms + mockNetwork.slowMs));
+};
+
+/** Dev menu: put the demo account into an edge state (mock only). */
+export function setMockScenario(state: ReturnType<typeof initialState>, scenario: 'empty' | 'daily_limit' | 'demo') {
+  if (scenario === 'empty') {
+    state.matches = [];
+    state.received = [];
+    state.sent = [];
+    state.inbox = [];
+    state.acted = new Set(['p_maya', 'p_lena', 'p_omar', 'p_ayesha']);
+    state.seenToday = 0;
+  } else if (scenario === 'daily_limit') {
+    state.seenToday = DAILY_LIMIT;
+  } else {
+    Object.assign(state, initialState(), { me: state.me, onboarded: state.onboarded });
+  }
+}
 const ago = (min: number) => new Date(Date.now() - min * 60_000).toISOString();
 
 /** In-memory backend. Deterministic enough for tests and store screenshots. */
@@ -126,7 +151,22 @@ export function createMockApi(): NeeoApi & { _state: ReturnType<typeof initialSt
       },
       async setPreferences(p) {
         await delay(120);
+        const old = state.preferences;
+        const turningOn = (p.verifiedOnly && !old.verifiedOnly) || (p.voiceOnly && !old.voiceOnly) || (!!p.travelCity && p.travelCity !== old.travelCity);
+        if (turningOn && !(await hasPlus())) throw new ApiError('plus_required');
         state.preferences = { ...p };
+      },
+      async presets() {
+        return [...state.presets];
+      },
+      async savePreset(name, prefs) {
+        if (!(await hasPlus())) throw new ApiError('plus_required');
+        const preset: PreferencePreset = { id: uid('pre'), name, prefs };
+        state.presets.push(preset);
+        return preset;
+      },
+      async deletePreset(id) {
+        state.presets = state.presets.filter((p) => p.id !== id);
       },
       async review() {
         return { ...state.review };
@@ -306,11 +346,21 @@ export function createMockApi(): NeeoApi & { _state: ReturnType<typeof initialSt
         await delay();
         const c: CheckIn = { id: uid('ci'), status: 'scheduled', ...input };
         state.checkIns.push(c);
+        // In production this arrives as a push at check_in_at (checkin-escalation job).
+        state.inbox.unshift({ id: uid('in'), kind: 'check_in', title: 'Date check-in', body: `At ${input.place || 'your date'}: let us know you’re okay.`, createdAt: new Date().toISOString(), read: false, href: `/check-in-prompt/${c.id}` });
         return c;
       },
       async confirmCheckIn(id) {
         const c = state.checkIns.find((x) => x.id === id);
         if (c) c.status = 'checked_in';
+      },
+      async requestHelp(id) {
+        await delay();
+        const c = state.checkIns.find((x) => x.id === id);
+        if (c) c.status = 'help_requested';
+      },
+      async activeCheckIn() {
+        return [...state.checkIns].reverse().find((c) => c.status === 'scheduled') ?? null;
       },
       async appeal(body) {
         await delay();
@@ -380,6 +430,42 @@ export function createMockApi(): NeeoApi & { _state: ReturnType<typeof initialSt
         return { ...t, messages: [...t.messages] };
       },
     },
+    saved: {
+      async profiles() {
+        await delay(80);
+        return [...state.savedProfiles.entries()]
+          .filter(([id]) => !state.blocked.some((b) => b.id === id))
+          .map(([id, savedAt]) => ({ profile: findProfile(id), savedAt }))
+          .sort((a, b) => b.savedAt.localeCompare(a.savedAt));
+      },
+      async saveProfile(profileId) {
+        findProfile(profileId);
+        state.savedProfiles.set(profileId, new Date().toISOString());
+      },
+      async removeProfile(profileId) {
+        state.savedProfiles.delete(profileId);
+      },
+      async plans() {
+        await delay(80);
+        return [...state.plans];
+      },
+      async savePlan(plan) {
+        state.plans = [{ ...plan, savedAt: new Date().toISOString() }, ...state.plans.filter((p) => p.id !== plan.id)];
+      },
+      async removePlan(id) {
+        state.plans = state.plans.filter((p) => p.id !== id);
+      },
+    },
+    notes: {
+      async get(profileId) {
+        return state.notes.get(profileId) ?? '';
+      },
+      async set(profileId, body) {
+        if (body.length > 1000) throw new ApiError('unknown', 'Keep notes under 1000 characters');
+        if (body.trim()) state.notes.set(profileId, body.trim());
+        else state.notes.delete(profileId);
+      },
+    },
     inbox: {
       async list() {
         await delay(80);
@@ -389,9 +475,50 @@ export function createMockApi(): NeeoApi & { _state: ReturnType<typeof initialSt
         state.inbox.forEach((i) => (i.read = true));
       },
     },
+    invites: {
+      async list(kind) {
+        await delay(80);
+        return state.invites.filter((i) => i.kind === kind && i.status !== 'revoked').map((i) => ({ ...i })); // copies: callers must see changes
+      },
+      async create(kind, input) {
+        await delay();
+        if (input.name.trim().length < 2) throw new ApiError('unknown', 'Add their first name');
+        const token = uid('tok');
+        const inv: Invite = { id: uid('iv'), kind, name: input.name.trim(), phone: input.phone, status: 'sent', url: links.invite(token), createdAt: new Date().toISOString() };
+        state.invites.unshift(inv);
+        // Mock only: the person answers a moment later (in production they open the link on neeo.app/invite).
+        if (state.autoReply) setTimeout(() => respondToInvite(state, inv.id), 1500);
+        return inv;
+      },
+      async revoke(id) {
+        const i = state.invites.find((x) => x.id === id);
+        if (i) i.status = 'revoked';
+        if (i?.kind === 'chaperone' && !state.invites.some((x) => x.kind === 'chaperone' && x.status === 'accepted')) state.me.chaperoneEnabled = false;
+      },
+    },
+    friendsTakes: {
+      async mine() {
+        await delay(80);
+        return state.takes.map((x) => ({ ...x }));
+      },
+      async setApproved(id, approved) {
+        const tk = state.takes.find((x) => x.id === id);
+        if (tk) tk.approved = approved;
+        state.me.friendsTakes = state.takes.filter((x) => x.approved).map(({ id: i, author, text }) => ({ id: i, author, text }));
+      },
+      async remove(id) {
+        state.takes = state.takes.filter((x) => x.id !== id);
+        state.me.friendsTakes = state.takes.filter((x) => x.approved).map(({ id: i, author, text }) => ({ id: i, author, text }));
+      },
+    },
   };
 
   return Object.assign(api, { _state: state });
+}
+
+/** Plus comes from the store (mock store in dev), exactly like the server's has_plus(). */
+async function hasPlus() {
+  return isPlusActive((await purchases.getMembership()).status);
 }
 
 function msg(matchId: string, senderId: string, kind: Message['kind'], body: string, createdAt = new Date().toISOString()): Message {
@@ -405,17 +532,7 @@ function nextBatchTime() {
   return d.toISOString();
 }
 
-export function completeness(me: Pick<MyProfile, 'photos' | 'prompts' | 'verified' | 'dateIdeas' | 'basics'>) {
-  const parts = [
-    Math.min(me.photos.length, 6) / 6,
-    Math.min(me.prompts.length, 3) / 3,
-    me.prompts.some((p) => p.voice) ? 1 : 0,
-    me.verified ? 1 : 0,
-    me.dateIdeas.length > 0 ? 1 : 0,
-    me.basics.length >= 3 ? 1 : 0,
-  ];
-  return Math.round((parts.reduce((a, b) => a + b, 0) / parts.length) * 100) / 100;
-}
+export { completeness };
 
 function initialState() {
   const [maya, ayesha, omar, lena] = seedProfiles as [Profile, Profile, Profile, Profile];
@@ -483,13 +600,34 @@ function initialState() {
     failUploads: false,
     failSends: false,
     outgoingRequests: new Set<string>(),
-    preferences: { genders: ['woman'], ageMin: 24, ageMax: 34, maxKm: 25, intentions: ['long_term', 'life_partner'], verifiedOnly: false } as Preferences,
+    preferences: { genders: ['woman'], ageMin: 24, ageMax: 34, maxKm: 25, intentions: ['long_term', 'life_partner'], verifiedOnly: false, voiceOnly: false, travelCity: null } as Preferences,
+    presets: [] as PreferencePreset[],
+    savedProfiles: new Map<string, string>(),
+    plans: [] as DatePlan[],
+    notes: new Map<string, string>(),
     review: { status: 'active' } as { status: 'active' | 'under_review' | 'suspended'; reason?: string },
     appeals: [] as Appeal[],
     tickets: [] as SupportTicket[],
+    invites: [] as Invite[],
+    takes: [] as MyFriendsTake[],
     inbox: [
       { id: 'in_1', kind: 'photo_request_declined', title: 'Photo request', body: 'Chris chose to keep their photos private for now.', createdAt: ago(60 * 20), read: false },
       { id: 'in_2', kind: 'new_like', title: 'New like', body: 'Someone liked your answer about Sundays.', createdAt: ago(90), read: true },
     ] as InboxItem[],
   };
+}
+
+/** Mock only: what the invited person does from the neeo.app/invite link. */
+export function respondToInvite(state: ReturnType<typeof initialState>, inviteId: string) {
+  const inv = state.invites.find((i) => i.id === inviteId);
+  if (!inv || inv.status !== 'sent') return;
+  inv.status = 'accepted';
+  const now = new Date().toISOString();
+  if (inv.kind === 'chaperone') {
+    state.me.chaperoneEnabled = true;
+    state.inbox.unshift({ id: `in_${Date.now()}`, kind: 'chaperone_accepted', title: 'Chaperone added', body: `${inv.name} accepted. They can now read your chats when you add them to one.`, createdAt: now, read: false, href: '/settings/chaperone' });
+  } else {
+    state.takes.unshift({ id: `ft_${Date.now()}`, author: inv.name, text: 'Kind, curious and always the first to plan the next get-together.', approved: false });
+    state.inbox.unshift({ id: `in_${Date.now()}`, kind: 'friends_take', title: 'A Friend’s Take arrived', body: `${inv.name} wrote something about you. Read it and choose whether to show it.`, createdAt: now, read: false, href: '/settings/friends-take' });
+  }
 }

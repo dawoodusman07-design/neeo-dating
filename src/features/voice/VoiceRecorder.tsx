@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import { RecordingPresets, requestRecordingPermissionsAsync, setAudioModeAsync, useAudioRecorder, useAudioRecorderState } from 'expo-audio';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme';
-import { Button, Text } from '@/ui';
+import { Button, FieldError } from '@/ui';
 import { formatDuration } from '@/lib/time';
 
 type Props = { onRecorded: (uri: string, durationSec: number) => void; label?: string; maxSec?: number };
@@ -39,11 +39,7 @@ export function VoiceRecorder({ onRecorded, label, maxSec = 30 }: Props) {
         title={state.isRecording ? `${tr('onboarding.recording')} ${formatDuration(state.durationMillis / 1000)}` : (label ?? tr('onboarding.promptVoice'))}
         onPress={state.isRecording ? stop : start}
       />
-      {denied ? (
-        <Text variant="small" color="danger">
-          Microphone access is off. You can turn it on in Settings.
-        </Text>
-      ) : null}
+      <FieldError message={denied ? tr('onboarding.micDenied') : undefined} />
     </View>
   );
 }

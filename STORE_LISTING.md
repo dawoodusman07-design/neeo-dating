@@ -21,7 +21,7 @@
 
 ## Description
 
-Something real starts with hello.
+Make room for something real.
 
 Neeo is a dating app for people who want something real. Every day you get a small set of thoughtful introductions — not an endless feed — so you can actually get to know someone.
 
@@ -48,7 +48,9 @@ Neeo is a dating app for people who want something real. Every day you get a sma
 • No reply timers, no streaks, no pressure
 • Plan a first date right in the chat
 
-Neeo Plus adds more daily introductions, see who liked you, advanced preferences and undo. Privacy and safety tools are always free.
+**Free, always:** daily introductions, seeing who liked you and replying, chat, voice notes, date ideas, photo privacy and every safety tool.
+
+**Neeo Plus** adds three optional conveniences: advanced filters (only verified profiles, only profiles with a voice prompt), saved preference presets, and travel mode to meet people in another city before you arrive.
 
 Neeo is for adults 18 and over.
 
@@ -58,7 +60,7 @@ Generated from the app (`npm run screenshots`), in `store/screenshots/`:
 
 | # | Screen | Caption |
 |---|---|---|
-| 1 | Welcome | Something real starts with hello |
+| 1 | Welcome | Make room for something real. |
 | 2 | Discover | A few thoughtful introductions a day |
 | 3 | Profile | Prompts that start real conversations |
 | 4 | Chat with date idea | Plan a first date, no reply timers |
@@ -70,11 +72,12 @@ Sizes: iPhone 6.7" (1290×2796), iPhone 6.5" (1242×2688), Android phone (1080×
 ## App Review notes (App Store Connect / Play)
 
 > Neeo uses phone-number sign-in. Please use this demo account:
-> Phone: **+1 555 555 0100** — verification code: **123456** (fixed test code; no SMS is sent).
+> Phone: **[TEST NUMBER — set in the Supabase dashboard for this review only]** — verification code: **[TEST CODE]** (no SMS is sent).
+> _(Never commit the real values. Rotate them after each review — see README → “App Review test account”.)_
 > After sign-in you'll go through onboarding (DOB must be 18+). Photos are moderated; for review, demo photos are pre-approved.
 > - Report: open any profile → "…" → Report, or in a chat tap the shield icon.
 > - Block: same menus → Block.
-> - Account deletion: You → Delete account (reauthenticate with code 123456 → type DELETE).
+> - Account deletion: You → Delete account (reauthenticate with the test code → type DELETE).
 > - Subscriptions use In-App Purchase via RevenueCat. Restore is on the paywall.
 > - Screenshot protection: on iOS, screenshots cannot be blocked; we blur the app switcher and notify the other person, as stated in the app.
 > Contact: support@neeo.app

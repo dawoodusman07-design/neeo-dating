@@ -6,6 +6,7 @@ import { ListGroup, ListRow, Screen, Text, toast } from '@/ui';
 import { api, DATA_MODE } from '@/data';
 import { MockPurchaseService, purchases, type MembershipStatus } from '@/services/purchases';
 import { membershipKey } from '@/features/membership/useMembership';
+import { mockNetwork, setMockScenario } from '@/data/mock';
 
 const STATES = ['purchase-pending', 'purchase-failed', 'purchase-cancelled', 'purchase-success', 'restored', 'restore-none', 'billing-issue', 'session-expired', 'export-ready', 'export-expired', 'offline', 'upload-failed', 'account-review', 'suspended', 'paused', 'deleted', 'not-found', 'reauth-failed'];
 const MEMBERSHIP: MembershipStatus[] = ['free', 'pending', 'active', 'renewal_off', 'billing_issue', 'expired'];
@@ -60,6 +61,19 @@ export default function Dev() {
           <ListGroup title="Mock store: membership as RevenueCat reports it">
             {MEMBERSHIP.map((s) => (
               <ListRow key={s} title={s} onPress={async () => { store.simulate(s); await qc.invalidateQueries({ queryKey: membershipKey }); toast(`Membership → ${s}`); refresh(); }} testID={`dev-membership-${s}`} />
+            ))}
+          </ListGroup>
+        </>
+      ) : null}
+      {mock ? (
+        <>
+          <ListGroup title="Network (mock)">
+            <ListRow title="Slow network (+3 s)" toggle={{ value: mockNetwork.slowMs > 0, onValueChange: (v) => { mockNetwork.slowMs = v ? 3000 : 0; qc.clear(); refresh(); } }} testID="dev-slow" />
+            <ListRow title="Offline" toggle={{ value: mockNetwork.offline, onValueChange: (v) => { mockNetwork.offline = v; qc.clear(); refresh(); } }} testID="dev-offline" />
+          </ListGroup>
+          <ListGroup title="Account scenario (mock)">
+            {(['empty', 'daily_limit', 'demo'] as const).map((s) => (
+              <ListRow key={s} title={{ empty: 'Empty account (no matches, chats or likes)', daily_limit: 'Daily introductions used up', demo: 'Reset demo data' }[s]} onPress={() => { setMockScenario(mock as never, s); qc.clear(); refresh(); toast(`Scenario: ${s}`); }} testID={`dev-scenario-${s}`} />
             ))}
           </ListGroup>
         </>

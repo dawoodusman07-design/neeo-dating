@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Linking } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Button, Card, ListGroup, ListRow, Screen, Text } from '@/ui';
+import { ListGroup, ListRow, Screen } from '@/ui';
+import { NotificationsOff } from '@/features/notifications/NotificationsOff';
 import { getPushPermission, type PushPermission } from '@/services/notifications';
 import { useSettings, type NotificationPrefs } from '@/stores/settings';
 
@@ -17,10 +17,7 @@ export default function NotificationsSettings() {
   return (
     <Screen title={t('settings.notifTitle')} back>
       {perm === 'denied' ? (
-        <Card tone="tint">
-          <Text>{t('settings.notifOff')}</Text>
-          <Button title={t('settings.openSettings')} variant="secondary" onPress={() => Linking.openSettings()} />
-        </Card>
+        <NotificationsOff />
       ) : null}
       <ListGroup>
         {KEYS.map((k) => (

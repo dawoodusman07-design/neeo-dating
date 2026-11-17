@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
-import { Button, ErrorState, ProfilePhoto } from '@/ui';
+import { Button, EmptyState, ErrorState, ProfilePhoto, Screen } from '@/ui';
+import { useRouter } from 'expo-router';
 import { api, type Profile } from '@/data';
 import { ageFromDob } from '@/lib/age';
 import { useOnboarding } from '@/stores/onboarding';
@@ -16,6 +17,9 @@ export default function Review() {
   const setStatus = useSession((s) => s.setStatus);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  const router = useRouter();
+  // Never publish (or render ', NaN') from an incomplete draft, e.g. after a deep link or a restored session.
+  const missing = !draft.dob ? 'dob' : !draft.firstName.trim() ? 'name' : draft.photos.length < 3 ? 'photos' : draft.prompts.filter((p) => p.answer.trim()).length < 3 ? 'prompts' : !draft.agreementAccepted ? 'agreement' : null;
 
   const preview: Profile = {
     id: 'me',
@@ -61,7 +65,13 @@ export default function Review() {
     }
   };
 
-  if (error) return <ErrorState title={t('common.genericError')} body={t('states.offline.body')} action={{ title: t('common.retry'), onPress: finish }} />;
+  if (missing)
+    return (
+      <Screen back scroll={false}>
+        <EmptyState icon="info" title={t('onboarding.reviewIncompleteTitle')} body={t('onboarding.reviewIncompleteBody')} action={{ title: t('onboarding.reviewIncompleteAction'), onPress: () => router.replace(`/onboarding/${missing}`) }} />
+      </Screen>
+    );
+  if (error) return <ErrorState title={t('common.genericError')} body={t('states.loadFailed.body')} action={{ title: t('common.retry'), onPress: finish }} />;
 
   const hero = preview.photos[0];
   return (
